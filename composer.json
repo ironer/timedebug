@@ -10,6 +10,9 @@
 			"email": "ironer80@gmail.com"
 		}
 	],
+	"require": {
+		"ironer/base62shrink": "@dev"
+	},
 	"autoload": {
 		"classmap": ["TimeDebug/"]
 	}
