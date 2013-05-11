@@ -1,0 +1,16 @@
+{
+	"name": "ironer/timedebug",
+	"type": "library",
+	"description": "debugging and modeling tool for PHP",
+	"keywords": ["debugging", "modeling"],
+	"license": ["BSD-3-Clause", "GPL-2.0", "GPL-3.0"],
+	"authors": [
+		{
+			"name": "Stefan Fiedler",
+			"email": "ironer80@gmail.com"
+		}
+	],
+	"autoload": {
+		"classmap": ["TimeDebug/"]
+	}
+}
