@@ -295,7 +295,7 @@ class TimeDebug {
 		echo "\n<script>\n";
 		readfile(__DIR__ . '/jak.packer.js');
 		echo "\n";
-		readfile(__DIR__ . '/../../base62shrink/Base62Shrink/b62s.packer.js');
+		readfile(BASE62SHRINK . '/b62s.packer.js');
 		echo "\n";
 		readfile(__DIR__ . '/timedebug.js');
 		echo "\ntd.local = " . (self::$local ? 'true' : 'false') . ";\n"
