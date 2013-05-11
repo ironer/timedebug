@@ -11,6 +11,7 @@
 // TODO: ulozit serii testu v TimeDebugu
 // TODO: vyplivnout vystup do iframe nebo dalsiho okna
 
+		
 
 var td = {};
 
