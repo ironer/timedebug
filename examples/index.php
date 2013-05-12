@@ -2,7 +2,7 @@
 
 define('DEBUG', TRUE); // debugging mode
 define('ADVANCEDLOG', TRUE); // advanced logging & debugging features
-define('LOCAL', TRUE); // allow runtime modification of logged and dumped variables (should be 'TRUE' just for local server)
+define('LOCAL', $_SERVER['SERVER_NAME'] == 'localhost'); // allow runtime modification of logged and dumped variables
 define('NOW', microtime(TRUE)); // get start time of application
 define('MEMORY', memory_get_usage()); // get current used memory
 define('ROOT', dirname(__DIR__)); // get root directory on server

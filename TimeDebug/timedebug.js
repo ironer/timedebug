@@ -5,6 +5,7 @@
  * used sources: Seznam's JAK library (http://seznam.cz)
  */
 
+// TODO: opravit scrollovani pinovaneho titulku pri najeti nad rodicovsky element
 // TODO: ulozit nastaveni do localstorage a/nebo vyexportovat do konzole
 // TODO: nacist nastaveni z localstorage a/nebo z konzole
 
