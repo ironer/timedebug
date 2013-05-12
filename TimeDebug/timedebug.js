@@ -11,8 +11,6 @@
 // TODO: ulozit serii testu v TimeDebugu
 // TODO: vyplivnout vystup do iframe nebo dalsiho okna
 
-		
-
 var td = {};
 
 td.local = false;
@@ -1914,14 +1912,12 @@ td.sendChanges = function(e) {
 		}
 		req.appendChild(JAK.mel('textarea', {'name': 'tdrequest', 'value': changesBase62}));
 
-		console.debug(changes);
-		console.debug(td.getTitlesData());
-		console.debug(td.getTdData());
-
-		
+//		console.debug(changes);
+//		console.debug(td.getTitlesData());
+//		console.debug(td.getTdData());
 
 		td.logView.appendChild(req);
-//		req.submit();
+		req.submit();
 	} else if ((url = newLoc.url + newLoc.sendGet).length <= td.maxUrlLength) {
 		window.open(url, e.shiftKey ? '_blank' : '_self');
 	} else {

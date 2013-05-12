@@ -433,8 +433,10 @@ class TimeDebug {
 				$retText .= $applied[2];
 			} catch(Exception $e) {
 				$retText .= '<pre id="' . $change['resId'] . '" class="nd-result nd-error"><div class="nd-rollover"><div class="nd-indenter">'
-						. ' Chyba pri modifikaci promenne na hodnotu ' . json_encode($change['value'])
-						. ' (' . gettype($change['value']) . '): ' . $e->getMessage() . ' </div></div></pre>';
+						. ($change['type'] % 2 ? ' Chyba pri rozsirovani pole polem ' : ' Chyba pri modifikaci promenne na hodnotu ')
+						. ($change['type'] === 3 ? $change['value'] : json_encode($change['value']))
+						. ($change['type'] % 2 ? '' : ' (' . gettype($change['value']) . ')')
+						. ': ' . $e->getMessage() . ' </div></div></pre>';
 				$change['res'] = $e->getCode();
 			}
 			unset($change['varPath']);
@@ -910,4 +912,3 @@ class TimeDebug {
 	}
 
 }
-
