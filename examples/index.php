@@ -45,7 +45,7 @@ class td
 
 	// create connector for dumping method
 	public static function dump(&$arg0 = NULL, &$arg1 = NULL, &$arg2 = NULL, &$arg3 = NULL, &$arg4 = NULL, &$arg5 = NULL, &$arg6 = NULL, &$arg7 = NULL, &$arg8 = NULL, &$arg9 = NULL) {
-		if (func_num_args() > 10) throw new Exception("Static method 'dump' accepts maximum of 10 argumens.");
+		if (func_num_args() > 10) throw new Exception("Static method 'dump' accepts maximum of 10 arguments.");
 		if (DEBUG) TimeDebug::dump();
 	}
 
