@@ -6,7 +6,7 @@ define('LOCAL', $_SERVER['SERVER_NAME'] == 'localhost'); // allow runtime modifi
 define('NOW', microtime(TRUE)); // get start time of application
 define('MEMORY', memory_get_usage()); // get current used memory
 define('ROOT', dirname(__DIR__)); // get root directory on server
-define('CACHE', __DIR__ . '/cache'); // cache for storing bigger changes sent by async AJAX's POST + hash in GET
+define('CACHE', __DIR__ . '/cache'); // cache for storing bigger changes sent by asynchronous AJAX's POST + hash in GET
 define('EXAMPLES', __DIR__); // current directory just for testing of directory to path constant parsing
 
 
@@ -59,12 +59,12 @@ if (DEBUG) { // initialize TimeDebug, if debug mode is on
 	TimeDebug::init(
 		CACHE,
 		array(
-			'advancedlog' => ADVANCEDLOG,
+			'advancedLog' => ADVANCEDLOG,
 			'local' => LOCAL,
 			'root' => ROOT,
-			'starttime' => NOW,
-			'pathconstants' => array('EXAMPLES'),
-			'urllength' => 1000
+			'startTime' => NOW,
+			'pathConstants' => array('EXAMPLES'),
+			'urlLength' => 1000
 		)
 	);
 }

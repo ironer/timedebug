@@ -74,8 +74,8 @@ td.hoveredChange = null;
 td.noContainerChangeIndex = 65535;
 
 td.tdHashEl = null;
-td.tdAnchor = JAK.mel('a', {'name': 'tdanchor'});
-td.logAnchor = JAK.mel('a', {'name': 'loganchor', 'id': 'logAnchor'});
+td.tdAnchor = JAK.mel('a', {'name': 'tdAnchor'});
+td.logAnchor = JAK.mel('a', {'name': 'logAnchor', 'id': 'logAnchor'});
 td.setLocHashTimeout = null;
 td.locationHashes = [];
 
@@ -414,13 +414,13 @@ td.changeAction = function(e, el) {
 			td.showLog(true, this.logRow);
 
 			if (td.tdFullWidth) {
-				if (this.varEl) hashes.push([td.tdInnerWrapper, 'tdanchor', td.tdContainer, 200]);
+				if (this.varEl) hashes.push([td.tdInnerWrapper, 'tdAnchor', td.tdContainer, 200]);
 			} else {
-				if (this.varEl) hashes.push([td.tdInnerWrapper, 'tdanchor', td.tdContainer, 100]);
-				hashes.push([td.logWrapper, 'loganchor', td.logContainer, 100]);
+				if (this.varEl) hashes.push([td.tdInnerWrapper, 'tdAnchor', td.tdContainer, 100]);
+				hashes.push([td.logWrapper, 'logAnchor', td.logContainer, 100]);
 			}
 		} else {
-			if (this.varEl) hashes.push([td.logWrapper, 'tdanchor', td.logContainer, 100]);
+			if (this.varEl) hashes.push([td.logWrapper, 'tdAnchor', td.logContainer, 100]);
 		}
 		td.setLocationHashes(true, hashes);
 	}
@@ -1670,7 +1670,7 @@ td.readKeyDown = function(e) {
 			if (tdNext === td.logRowActiveId) return true;
 			td.showDump(tdNext);
 			if (!td.tdFullWidth) {
-				td.setLocationHashes(true, [[td.logWrapper, 'loganchor', td.logContainer, 100]]);
+				td.setLocationHashes(true, [[td.logWrapper, 'logAnchor', td.logContainer, 100]]);
 			}
 			return false;
 		} else if (e.keyCode === 40 && !td.tdConsole && td.logRowActiveId < td.indexes.length) {
@@ -1679,7 +1679,7 @@ td.readKeyDown = function(e) {
 			if (tdNext === td.logRowActiveId) return true;
 			td.showDump(tdNext);
 			if (!td.tdFullWidth) {
-				td.setLocationHashes(true, [[td.logWrapper, 'loganchor', td.logContainer, 100]]);
+				td.setLocationHashes(true, [[td.logWrapper, 'logAnchor', td.logContainer, 100]]);
 			}
 			return false;
 		} else if (e.keyCode === 37 && td.activeTitle) {
@@ -1900,9 +1900,9 @@ td.sendChanges = function(e) {
 
 	newLoc = {
 		'url': window.location.protocol + '//' + window.location.host + window.location.pathname,
-		'sendGet': (td.get ? '?' + td.get + '&' : '?') + 'tdrequest=' + changesBase62,
+		'sendGet': (td.get ? '?' + td.get + '&' : '?') + 'tdRequest=' + changesBase62,
 		'postGet': td.get ? '?' + td.get : '',
-		'hashGet': (td.get ? '?' + td.get + '&' : '?') + 'tdhash='
+		'hashGet': (td.get ? '?' + td.get + '&' : '?') + 'tdHash='
 	};
 
 	if (td.post.length || e.ctrlKey || e.metaKey) {
@@ -1912,7 +1912,7 @@ td.sendChanges = function(e) {
 		for (i = 0, j = td.post.length; i < j; ++i) {
 			req.appendChild(JAK.mel('textarea', {'name': td.post[i][0], 'value': td.post[i][1]}));
 		}
-		req.appendChild(JAK.mel('textarea', {'name': 'tdrequest', 'value': changesBase62}));
+		req.appendChild(JAK.mel('textarea', {'name': 'tdRequest', 'value': changesBase62}));
 
 //		console.debug(changes);
 //		console.debug(td.getTitlesData());

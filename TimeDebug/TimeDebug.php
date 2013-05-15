@@ -12,27 +12,27 @@
 
 class TimeDebug {
 
-	const INIT_ADVANCED_LOG = 'advancedlog', // option for init() to trigger advanced logging (defaults to FALSE)
+	const INIT_ADVANCED_LOG = 'advancedLog', // option for init() to trigger advanced logging (defaults to FALSE)
 			INIT_LOCAL = 'local', // option for init() to trigger local server features (defaults to FALSE)
 			INIT_ROOT = 'root', // absolute path to the root of web aplication (for path shortening to relative, defaults to '')
-			INIT_START_TIME = 'starttime', // microtime of application start for calculations (defaults to microtime(TRUE))
-			INIT_START_MEMORY = 'startmemory', // starting amount of used memory for calculation of used resources (defaults to 0)
-			INIT_PATH_CONSTANTS = 'pathconstants', // array of constants containing absolute paths (e.g. CLASSES with value '/web/myapp/classes')
+			INIT_START_TIME = 'startTime', // microtime of application start for calculations (defaults to microtime(TRUE))
+			INIT_START_MEMORY = 'startMemory', // starting amount of used memory for calculation of used resources (defaults to 0)
+			INIT_PATH_CONSTANTS = 'pathConstants', // array of constants containing absolute paths (e.g. CLASSES with value '/web/myapp/classes')
 			INIT_GET = 'get', // option for init() with get variables for passing during debugging (defaults to &$_GET)
 			INIT_POST = 'post', // option for init() with post variables for passing during debugging (defaults to &$_POST)
-			INIT_MAX_URL_LENGTH = 'urllength', // maximum allowed length of URL for sending data, otherwise pre posting is used
+			INIT_MAX_URL_LENGTH = 'urlLength', // maximum allowed length of URL for sending data, otherwise pre posting is used
 
 			DEPTH = 'depth', // how many nested levels of array/object properties display (defaults to 8)
 			TRUNCATE = 'truncate', // how truncate long strings? (defaults to 70)
 			COLLAPSE = 'collapse', // always collapse? (defaults to false)
-			COLLAPSE_COUNT = 'collapsecount', // how big array/object are collapsed? (defaults to 7)
-			NO_BREAK = 'nobreak', // return dump without line breaks (defaults to false)
-			APP_RECURSION = 'apprecursion', // force { RECURSION } on all nested objects with given self::$recClass
-			PARENT_KEY = 'parentkey', // sets parent key for children's div to attribute 'data-pk' for arrays and objects
-			DUMP_ID = 'dumpid', // id for .nd 'pre' in HTML form
-			TDVIEW_INDEX = 'tdindex', // data-tdindex of .nd 'pre' in tdView
-			TITLE_TYPE = 'titletype', // data for data-tt for titles (1: change, 2: method, defaults to 3: log, 4: method)
-			TITLE_DATA = 'titledata'; // data for data-pk for titles
+			COLLAPSE_COUNT = 'collapseCount', // how big array/object are collapsed? (defaults to 7)
+			NO_BREAK = 'noBreak', // return dump without line breaks (defaults to false)
+			APP_RECURSION = 'appRecursion', // force { RECURSION } on all nested objects with given self::$recClass
+			PARENT_KEY = 'parentKey', // sets parent key for children's div to attribute 'data-pk' for arrays and objects
+			DUMP_ID = 'dumpId', // id for .nd 'pre' in HTML form
+			TDVIEW_INDEX = 'tdIndex', // data-tdindex of .nd 'pre' in tdView
+			TITLE_TYPE = 'titleType', // data for data-tt for titles (1: change, 2: method, defaults to 3: log, 4: method)
+			TITLE_KEY = 'titleKey'; // data for data-pk for titles
 
 
 	private static $initialized = FALSE;
@@ -145,7 +145,7 @@ class TimeDebug {
 		self::$maxUrlLength = max(intval($options[self::INIT_MAX_URL_LENGTH]), 0);
 		self::$initialized = TRUE;
 
-		if (isset($options[self::INIT_POST]['tdcache'])) $throwError = function($text) { echo 0 . $text; die; };
+		if (isset($options[self::INIT_POST]['tdCache'])) $throwError = function($text) { echo 0 . $text; die; };
 		else {
 			$throwError = function($text) { throw new Exception($text); };
 			if (self::$advancedLog) register_shutdown_function(array(__CLASS__, '_closeDebug'));
@@ -162,25 +162,25 @@ class TimeDebug {
 			chmod(self::$cache, 0777);
 		}
 
-		if (isset($options[self::INIT_POST]['tdcache'])) {
-			if (!file_exists(self::$cache . ($reqMd5 = md5($options[self::INIT_POST]['tdcache'])))) {
-				file_put_contents(self::$cache . $reqMd5, Base62Shrink::decompress($options[self::INIT_POST]['tdcache']));
+		if (isset($options[self::INIT_POST]['tdCache'])) {
+			if (!file_exists(self::$cache . ($reqMd5 = md5($options[self::INIT_POST]['tdCache'])))) {
+				file_put_contents(self::$cache . $reqMd5, Base62Shrink::decompress($options[self::INIT_POST]['tdCache']));
 			}
 			echo 1 . $reqMd5;
 			die;
-		} elseif (isset($options[self::INIT_GET]['tdhash'])) {
-			if (!file_exists($fileChanges = self::$cache . $options[self::INIT_GET]['tdhash'])) {
+		} elseif (isset($options[self::INIT_GET]['tdHash'])) {
+			if (!file_exists($fileChanges = self::$cache . $options[self::INIT_GET]['tdHash'])) {
 				throw new Exception("Soubor obsahujici zmeny '" . substr($fileChanges, strlen(self::$root))
 						. "' nelze najit v cache.");
 			}
 			self::$request = json_decode(file_get_contents($fileChanges), TRUE);
-			unset($options[self::INIT_GET]['tdhash']);
-		} elseif (isset($options[self::INIT_GET]['tdrequest'])) {
-			self::$request = json_decode(Base62Shrink::decompress($options[self::INIT_GET]['tdrequest']), TRUE);
-			unset($options[self::INIT_GET]['tdrequest']);
-		} elseif (isset($options[self::INIT_POST]['tdrequest'])) {
-			self::$request = json_decode(Base62Shrink::decompress($options[self::INIT_POST]['tdrequest']), TRUE);
-			unset($options[self::INIT_POST]['tdrequest']);
+			unset($options[self::INIT_GET]['tdHash']);
+		} elseif (isset($options[self::INIT_GET]['tdRequest'])) {
+			self::$request = json_decode(Base62Shrink::decompress($options[self::INIT_GET]['tdRequest']), TRUE);
+			unset($options[self::INIT_GET]['tdRequest']);
+		} elseif (isset($options[self::INIT_POST]['tdRequest'])) {
+			self::$request = json_decode(Base62Shrink::decompress($options[self::INIT_POST]['tdRequest']), TRUE);
+			unset($options[self::INIT_POST]['tdRequest']);
 		}
 
 		header('Content-type: text/html; charset=utf-8');
@@ -424,7 +424,7 @@ class TimeDebug {
 
 		for ($i = 0, $j = count($changes); $i < $j; ++$i) {
 			$change = &self::$request[$changes[$i]];
-			$change['resId'] = 'tdchres_' . ++self::$varCounter;
+			$change['resId'] = 'tdChRes_' . ++self::$varCounter;
 			try {
 				$applied = self::applyChange($var, $change['varPath'], $change['value'], $change['resId'], $change['type'], $hash);
 				$change['res'] = $applied[0];
@@ -699,7 +699,7 @@ class TimeDebug {
 									self::TRUNCATE => 10,
 									self::NO_BREAK => TRUE,
 									self::TITLE_TYPE => 2,
-									self::TITLE_DATA => $i
+									self::TITLE_KEY => $i
 								));
 							}
 						}
@@ -763,7 +763,7 @@ class TimeDebug {
 			$retVal = '"' . self::encodeString(substr($var, 0, min($options[self::TRUNCATE], 512)), TRUE)
 					. '&hellip;"</span> (' . $varLen . ')';
 
-			if ($arrKey === FALSE) $data = isset($options[self::TITLE_DATA]) ? ' data-pk="' . $options[self::TITLE_DATA] . '"' : '';
+			if ($arrKey === FALSE) $data = isset($options[self::TITLE_KEY]) ? ' data-pk="' . $options[self::TITLE_KEY] . '"' : '';
 			else $data = ' data-pk="' . $arrKey . '"';
 			$retTitle = self::$advancedLog ? '<span id="t' . self::$idPrefix . '_' . self::incCounter()
 					. '" class="nd-title nd-color"' . $data . ' data-tt="' . (isset($options[self::TITLE_TYPE]) ? $options[self::TITLE_TYPE] : 3)
