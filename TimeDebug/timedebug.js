@@ -5,8 +5,6 @@
  * used sources: Seznam's JAK library (http://seznam.cz)
  */
 
-// TODO: predelat indexy hashmap na camelCase
-// TODO: opravit scrollovani pinovaneho titulku pri najeti nad rodicovsky element
 // TODO: ulozit nastaveni do localstorage a/nebo vyexportovat do konzole
 // TODO: nacist nastaveni z localstorage a/nebo z konzole
 
@@ -50,6 +48,7 @@ td.help = '';
 
 td.visibleTitles = [];
 td.activeTitle = null;
+td.scrollTitle = null;
 td.titleShowData = {'timeout': null, 'element': null, 'tar': null, 'left': 0, 'top': 0};
 td.titleHideTimeout = null;
 td.hide = [0, JAK.mel('div', {'id': 'tdTitleMask'}), JAK.mel('pre', {'id': 'tdNoTitles', 'innerHTML': 'Titulky vypnuty'})];
@@ -201,9 +200,13 @@ td.init = function(logId) {
 	JAK.Events.addListener(document, 'contextmenu', td, td.tdStop);
 	JAK.Events.addListener(td.tdInnerWrapper, 'mousedown', td, td.changeVar);
 
-	if (window.addEventListener) window.addEventListener('DOMMouseScroll', td.mouseWheel, false);
+	if (window.addEventListener) {
+		window.addEventListener('DOMMouseScroll', td.mouseWheel, false);
+		if (JAK.Browser.client === 'gecko') window.addEventListener('MozMousePixelScroll', td.ffPreventWheelDouble, false);
+	}
 	window.onmousewheel = document.onmousewheel = td.mouseWheel;
 	document.onkeydown = td.readKeyDown;
+	document.onmouseup = td.noRightClickSelection;
 
 	if (td.response.length) {
 		td.loadChanges(td.response);
@@ -285,22 +288,37 @@ td.findVarEl = function(el, path, type) {
 	return false;
 };
 
-td.mouseWheel = function(e) {
-	if (td.activeTitle === null) return true;
-	var tar = JAK.Events.getTarget(e);
-	if (tar.tagName.toLowerCase() === 'b') tar = tar.parentNode;
-	if (!JAK.DOM.hasClass(tar, 'nd-titled')) return true;
-
+td.ffPreventWheelDouble = function(e) {
+	if (td.scrollTitle === null || td.scrollTitle.clientHeight === td.scrollTitle.scrollHeight) return true;
 	td.tdStop(e);
+	return false;
+};
 
-	tar = td.activeTitle || tar.tdTitle;
-
+td.mouseWheel = function(e) {
+	if (td.scrollTitle === null || td.scrollTitle.clientHeight === td.scrollTitle.scrollHeight) return true;
+	td.tdStop(e);
 	var delta = 0;
 
 	if (e.wheelDelta) delta = (e.wheelDelta > 0 ? -1 : 16);
 	else if (e.detail) delta = (e.detail < 0 ? -1 : 16);
 
-	tar.scrollTop = Math.max(0, 16 * parseInt((tar.scrollTop + delta) / 16));
+	td.scrollTitle.scrollTop = Math.max(0, 16 * parseInt((td.scrollTitle.scrollTop + delta) / 16));
+	return false;
+};
+
+td.noRightClickSelection = function(e) {
+	if (td.tdConsole !== null || e.button !== JAK.Browser.mouse.right) return true;
+
+	if (window.getSelection) {
+		if (window.getSelection().empty) {
+			window.getSelection().empty();
+		} else if (window.getSelection().removeAllRanges) {
+			window.getSelection().removeAllRanges();
+		}
+	} else if (document.selection) {
+		document.selection.empty();
+	}
+
 	return false;
 };
 
@@ -1317,9 +1335,10 @@ td.showTitle = function() {
 
 		td.visibleTitles.push(el.tdTitle);
 		td.keepMaxZIndex(el.tdTitle);
-		td.activeTitle = el.tdTitle;
-	} else if (tar.nodeType === 1 && JAK.DOM.hasClass(tar, 'nd-titled') && el.tdTitle.style.zIndex < td.zIndexMax) {
-		td.keepMaxZIndex(el.tdTitle);
+		td.scrollTitle = td.activeTitle = el.tdTitle;
+	} else if (tar.nodeType === 1 && JAK.DOM.hasClass(tar, 'nd-titled')) {
+		td.scrollTitle = el.tdTitle;
+		if (el.tdTitle.style.zIndex < td.zIndexMax) td.keepMaxZIndex(el.tdTitle);
 	}
 
 	if (td.activeTitle === null) return false;
@@ -1539,13 +1558,16 @@ td.hideTimer = function() {
 		td.titleShowData.timeout = null;
 	}
 
-	if (td.activeTitle !== this.tdTitle) return false;
+	td.scrollTitle = null;
+
+	if (td.activeTitle !== this.tdTitle || td.actionData.element !== null) return false;
 
 	if (td.titleHideTimeout) {
 		window.clearTimeout(td.titleHideTimeout);
 		td.titleHideTimeout = null;
 	}
-	if (!this.tdTitle.pinned && td.actionData.element === null) td.titleHideTimeout = window.setTimeout(td.hideTitle, 300);
+
+	td.titleHideTimeout = window.setTimeout(td.hideTitle, 300);
 	return true;
 };
 
@@ -1706,7 +1728,7 @@ td.readKeyDown = function(e) {
 			}
 			td.visibleTitles.length = 0;
 			td.zIndexMax = 100;
-			td.activeTitle = null;
+			td.scrollTitle = td.activeTitle = null;
 			return false;
 		} else if (e.keyCode === 13 && td.tdConsole) {
 			JAK.Events.stopEvent(e);
