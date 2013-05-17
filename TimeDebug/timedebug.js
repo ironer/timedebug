@@ -243,7 +243,7 @@ td.loadChanges = function(changesData) {
 		change = td.createChange(changesData[i], container, varEl, log);
 		change.valid = true;
 		change.formated = true;
-		if (change.resEl && changesData[i]['fullHeight'] === 1) td.switchFullHeight(change.resEl, 2);
+		if (change.resEl && changesData[i].fullHeight === 1) td.switchFullHeight(change.resEl, 2);
 	}
 	td.updateChangeList();
 };
@@ -853,7 +853,7 @@ td.saveVarChange = function(type, varEl) {
 		}
 	} else {
 		varEl = td.duplicateNode(varEl);
-		change = td.createChange({'path': varData['path'], 'value': value, 'type': type}, varData['container'], varEl, varData['logRow']);
+		change = td.createChange({'path': varData.path, 'value': value, 'type': type}, varData.container, varEl, varData.logRow);
 		change.valid = valid;
 		change.formated = formated;
 	}
@@ -1875,17 +1875,17 @@ td.getChangesData = function() {
 			changeData.path,
 			changeData.type === 2 ? '' : (changeData.type === 3 ? JSON.stringify(changeData.value) : changeData.value),
 			changeData.type,
-			(td.changes[i].resEl ? td.changes[i].resEl.fullHeight : changeData['fullHeight']) ? 1 : 0
+			(td.changes[i].resEl ? td.changes[i].resEl.fullHeight : changeData.fullHeight) ? 1 : 0
 		]);
 	}
 	return changesData;
 };
 
-td.getTdData = function() {
+td.getTdData = function(oldRequest) {
+
 	var tdData = {
 		'get': td.get,
 		'post': td.post,
-		'oldRequest': JSON.parse(td.oldRequest),
 		'tdFullWidth': td.tdFullWidth,
 		'tdWidth': td.tdWidth,
 		'logRowActiveHash': td.logRowActive === null ? '' : td.logRowActive.hash,
@@ -1895,11 +1895,13 @@ td.getTdData = function() {
 		'hide': td.hide[0]
 	};
 
-	for (var i = 0, j = td.logRows.length; i < j; ++i) if (td.logRowsChosen[i]) tdData['logRowsChosenHashes'].push(td.logRows[i].hash);
+	if (oldRequest) tdData.oldRequest = JSON.parse(td.oldRequest);
 
-	tdData['styles'] = {'tdOuterWrapper': {'width': td.wrapperWidth, 'height': td.wrapperHeight}};
+	for (var i = 0, j = td.logRows.length; i < j; ++i) if (td.logRowsChosen[i]) tdData.logRowsChosenHashes.push(td.logRows[i].hash);
 
-	tdData['scrolls'] = {
+	tdData.styles = {'tdOuterWrapper': {'width': td.wrapperWidth, 'height': td.wrapperHeight}};
+
+	tdData.scrolls = {
 		'tdContainer': {'scrollLeft': td.tdContainer.scrollLeft, 'scrollTop': td.tdContainer.scrollTop},
 		'logContainer': {'scrollLeft': td.logContainer.scrollLeft, 'scrollTop': td.logContainer.scrollTop}
 	};
@@ -1927,8 +1929,11 @@ td.sendChanges = function(e) {
 		'hashGet': (td.get ? '?' + td.get + '&' : '?') + 'tdHash='
 	};
 
+	if (!localStorage.timeDebug) localStorage.timeDebug = {};
+	localStorage.timeDebug.lastRequest = b62s.base8To32k(b62s.compress(JSON.stringify({'config': td.getTdData(), 'titles': td.getTitlesData()})));
+
 	if (td.post.length || e.ctrlKey || e.metaKey) {
-		var req = JAK.mel('form', {'action': newLoc.url + newLoc.postGet, method:'post'}, {'display': 'none'});
+		var req = JAK.mel('form', {'action': newLoc.url + newLoc.postGet, 'method': 'post'}, {'display': 'none'});
 		if (e.shiftKey) req.target = '_blank';
 
 		for (i = 0, j = td.post.length; i < j; ++i) {
@@ -1936,12 +1941,8 @@ td.sendChanges = function(e) {
 		}
 		req.appendChild(JAK.mel('textarea', {'name': 'tdRequest', 'value': changesBase62}));
 
-		console.debug(changes);
-		console.debug(td.getTitlesData());
-		console.debug(td.getTdData());
-
-//		td.logView.appendChild(req);
-//		req.submit();
+		td.logView.appendChild(req);
+		req.submit();
 	} else if ((url = newLoc.url + newLoc.sendGet).length <= td.maxUrlLength) {
 		window.open(url, e.shiftKey ? '_blank' : '_self');
 	} else {
