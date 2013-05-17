@@ -19,10 +19,6 @@ body.nd-loading {
 }
 pre.nd div {
 	padding-left: 3ex;
-	margin-bottom: 5px;
-}
-.nd-row pre.nd div {
-	margin-bottom: 0;
 }
 pre.nd div div {
 	border-left: 1px solid rgba(0, 0, 0, 0.1);
@@ -32,7 +28,7 @@ pre.nd {
 	margin: 0;
 	border: medium none;
 	padding: 0;
-	line-height: 14px;
+	line-height: 16px;
 }
 pre.nd-location {
 	font-size: 12px;
