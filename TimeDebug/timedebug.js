@@ -29,6 +29,7 @@ td.dumps = [];
 td.indexes = [];
 td.response = null;
 td.hash2Id = {};
+td.hash2LogId = {};
 td.oldRequest = '';
 td.allowClick = true;
 td.clickTimeout = null;
@@ -133,8 +134,8 @@ td.init = function(logId) {
 				td.setTitles(logNodes[i]);
 			} else if (JAK.DOM.hasClass(logNodes[i], 'nd-log')) {
 				td.logRows.push(logNodes[i]);
-				logNodes[i].logId = td.logRows.length;
 				td.hash2Id[logNodes[i].hash = logNodes[i].getAttribute('data-hash')] = logNodes[i].id;
+				td.hash2LogId[logNodes[i].hash] = logNodes[i].logId = td.logRows.length;
 				logNodes[i].runtime = logNodes[i].getAttribute('data-runtime');
 				logNodes[i].logTitle = logNodes[i].getAttribute('data-title');
 				logNodes[i].onclick = td.logClick;
@@ -213,6 +214,13 @@ td.init = function(logId) {
 		td.oldRequest = JSON.stringify(td.getChangesData());
 	}
 	td.setTitles(td.control);
+	if (localStorage.tdLastRequest) td.loadLastRequest(); 
+};
+
+td.loadLastRequest = function() {
+	var lastReqeust = b62s.decompress(b62s.base32kTo8(localStorage.tdLastRequest));
+	console.debug(lastReqeust);
+	delete(localStorage.tdLastRequest);
 };
 
 td.loadChanges = function(changesData) {
@@ -1150,28 +1158,33 @@ td.logAction = function(e) {
 		);
 
 		document.body.focus();
-	} else {
-		if (td.tdFullWidth) {
-			td.tdFullWidth = false;
-			JAK.DOM.removeClass(document.body.parentNode, 'nd-fullscreen');
-
-			document.body.style.marginLeft = td.tdContainer.style.width = td.control.style.left = td.tdWidth + 'px';
-			td.logContainer.style.width = 'auto';
-			td.logRowActive.removeAttribute('style');
-		} else {
-			td.tdFullWidth = true;
-			JAK.DOM.addClass(document.body.parentNode, 'nd-fullscreen');
-
-			document.body.style.marginLeft = td.control.style.left = 0;
-			td.tdContainer.style.width = '100%';
-			td.logContainer.style.width = td.tdContainer.clientWidth + 'px';
-			td.logRowActive.style.width = (td.tdContainer.clientWidth - 48) + 'px';
-		}
-
-		td.tdResizeWrapper();
-	}
+	} else td.switchFullWidth();
 
 	return false;
+};
+
+td.switchFullWidth = function(force) {
+	force = force || 0;
+
+	if (!td.tdFullWidth && force !== 1) {
+		td.tdFullWidth = true;
+		JAK.DOM.addClass(document.body.parentNode, 'nd-fullscreen');
+
+		document.body.style.marginLeft = td.control.style.left = 0;
+		td.tdContainer.style.width = '100%';
+		td.logContainer.style.width = td.tdContainer.clientWidth + 'px';
+		td.logRowActive.style.width = (td.tdContainer.clientWidth - 48) + 'px';
+	} else if (td.tdFullWidth && force !== 2) {
+		td.tdFullWidth = false;
+		JAK.DOM.removeClass(document.body.parentNode, 'nd-fullscreen');
+
+		document.body.style.marginLeft = td.tdContainer.style.width = td.control.style.left = td.tdWidth + 'px';
+		td.logContainer.style.width = 'auto';
+		td.logRowActive.removeAttribute('style');
+	} else return false;
+
+	td.tdResizeWrapper();
+	return true;
 };
 
 td.logResizing = function(e) {
@@ -1734,17 +1747,7 @@ td.readKeyDown = function(e) {
 			JAK.Events.stopEvent(e);
 		}
 		else if (e.keyCode === 32 && !td.tdConsole) {
-			if (td.hide[0] === 0) {
-				document.body.appendChild(td.hide[1]);
-			} else if (td.hide[0] === 1) {
-				for (i = td.visibleTitles.length; i-- > 0;) td.visibleTitles[i].style.display = 'none';
-				document.body.removeChild(td.hide[1]);
-				document.body.appendChild(td.hide[2]);
-			} else {
-				for (i = td.visibleTitles.length; i-- > 0;) td.visibleTitles[i].style.display = 'block';
-				document.body.removeChild(td.hide[2]);
-			}
-			td.hide[0] = ++td.hide[0] % 3;
+			td.switchTitleHide();
 			return false;
 		} else if (e.keyCode === 9 && td.tdConsole) {
 			JAK.Events.cancelDef(e);
@@ -1755,6 +1758,27 @@ td.readKeyDown = function(e) {
 			return false;
 		}
 	}
+	return true;
+};
+
+td.switchTitleHide = function(force) {
+	if (typeof force === 'undefined') td.hide[0] = ++td.hide[0] % 3;
+	else if (td.hide[0] === ~~force) return false;
+	else td.hide[0] = ~~force;
+
+	var i;
+
+	if (td.hide[0] === 1) {
+		document.body.appendChild(td.hide[1]);
+	} else if (td.hide[0] === 2) {
+		for (i = td.visibleTitles.length; i-- > 0;) td.visibleTitles[i].style.display = 'none';
+		document.body.removeChild(td.hide[1]);
+		document.body.appendChild(td.hide[2]);
+	} else {
+		for (i = td.visibleTitles.length; i-- > 0;) td.visibleTitles[i].style.display = 'block';
+		document.body.removeChild(td.hide[2]);
+	}
+
 	return true;
 };
 
@@ -1881,11 +1905,8 @@ td.getChangesData = function() {
 	return changesData;
 };
 
-td.getTdData = function(oldRequest) {
-
+td.getTdData = function(allData) {
 	var tdData = {
-		'get': td.get,
-		'post': td.post,
 		'tdFullWidth': td.tdFullWidth,
 		'tdWidth': td.tdWidth,
 		'logRowActiveHash': td.logRowActive === null ? '' : td.logRowActive.hash,
@@ -1895,7 +1916,11 @@ td.getTdData = function(oldRequest) {
 		'hide': td.hide[0]
 	};
 
-	if (oldRequest) tdData.oldRequest = JSON.parse(td.oldRequest);
+	if (allData) {
+		tdData.get = td.get;
+		tdData.post = td.post;
+		tdData.oldRequest = JSON.parse(td.oldRequest);
+	}
 
 	for (var i = 0, j = td.logRows.length; i < j; ++i) if (td.logRowsChosen[i]) tdData.logRowsChosenHashes.push(td.logRows[i].hash);
 
@@ -1907,6 +1932,44 @@ td.getTdData = function(oldRequest) {
 	};
 
 	return tdData;
+};
+
+td.setTdData = function(tdData) {
+	td.switchFullWidth(tdData['tdfullWidth'] ? 2 : 1);
+	document.body.style.marginLeft = td.tdContainer.style.width = td.actionData.element.style.left = (td.tdWidth = tdData['tdWidth']) + 'px';
+	td.windowResize();
+
+	var i, logId;
+	if (logId = td.hash2LogId[tdData['logRowActiveHash']]) td.showDump(logId);
+
+	for (i = td.logRows.length; i-- > 0;) {
+		if (td.logRowsChosen[i]) {
+			td.logRowsChosen[i] = false;
+			JAK.DOM.removeClass(td.logRows[i], 'nd-chosen');
+		}
+	}
+	for (i = tdData['logRowsChosenHashes'].length; i-- > 0;) {
+		if (logId = td.hash2LogId[tdData['logRowsChosenHashes'][i]]) {
+			td.logRowsChosen[logId - 1] = true;
+			JAK.DOM.addClass(td.logRows[logId - 1], 'nd-chosen');
+		}
+	}
+
+	td.deleteChange.showLogRow = tdData['showLogRow'];
+	td.checkDeleteChange();
+
+	td.consoleConfig = tdData['consoleConfig'];
+
+	td.switchTitleHide(tdData['hide']);
+
+//
+//	tdData.styles = {'tdOuterWrapper': {'width': td.wrapperWidth, 'height': td.wrapperHeight}};
+//
+//	tdData.scrolls = {
+//		'tdContainer': {'scrollLeft': td.tdContainer.scrollLeft, 'scrollTop': td.tdContainer.scrollTop},
+//		'logContainer': {'scrollLeft': td.logContainer.scrollLeft, 'scrollTop': td.logContainer.scrollTop}
+//	};
+
 };
 
 td.sendChanges = function(e) {
@@ -1929,8 +1992,7 @@ td.sendChanges = function(e) {
 		'hashGet': (td.get ? '?' + td.get + '&' : '?') + 'tdHash='
 	};
 
-	if (!localStorage.timeDebug) localStorage.timeDebug = {};
-	localStorage.timeDebug.lastRequest = b62s.base8To32k(b62s.compress(JSON.stringify({'config': td.getTdData(), 'titles': td.getTitlesData()})));
+	localStorage.tdLastRequest = b62s.base8To32k(b62s.compress(JSON.stringify({'config': td.getTdData(), 'titles': td.getTitlesData()})));
 
 	if (td.post.length || e.ctrlKey || e.metaKey) {
 		var req = JAK.mel('form', {'action': newLoc.url + newLoc.postGet, 'method': 'post'}, {'display': 'none'});
