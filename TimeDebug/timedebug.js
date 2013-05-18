@@ -188,11 +188,14 @@ td.init = function(logId) {
 			+ '&nbsp;&nbsp;&nbsp;&nbsp;<span>smazat</span>'
 			+ '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div><hr>'
 			+ '</strong></span>*</span>';
+
 	document.body.appendChild(td.control);
+	td.control.controlTitle = JAK.gel('controlTitle');
+	td.control.helpTitle = JAK.gel('helpTitle');
 
 	JAK.Events.addListener(td.control, 'mousedown', td, td.logAction);
 	td.controlSpaceX = td.control.clientWidth + JAK.DOM.scrollbarWidth();
-	JAK.gel('controlTitle').appendChild(td.tdChangeList);
+	td.control.controlTitle.appendChild(td.tdChangeList);
 	if (td.local) JAK.Events.addListener(JAK.gel('tdMenuSend'), 'mousedown', td, td.sendChanges);
 
 	JAK.Events.addListener(JAK.gel('tdMenuRestore'), 'mousedown', td, td.reloadPage);
@@ -210,11 +213,11 @@ td.init = function(logId) {
 	document.onmouseup = td.noRightClickSelection;
 
 	if (td.response.length) {
-		td.loadChanges(td.response);
+		td.setChangesData(td.response);
 		td.oldRequest = JSON.stringify(td.getChangesData());
 	}
 	td.setTitles(td.control);
-	if (localStorage.tdLastRequest) td.loadLastRequest(); 
+	if (localStorage.tdLastRequest) td.loadLastRequest();
 };
 
 td.loadLastRequest = function() {
@@ -222,79 +225,7 @@ td.loadLastRequest = function() {
 	delete(localStorage.tdLastRequest);
 
 	td.setTdData(lastReqeust['config']);
-};
-
-td.loadChanges = function(changesData) {
-	var path, log, container, varEl, change;
-	for (var i = 0, j = changesData.length; i < j; ++i) {
-		path = changesData[i].path.split(',');
-		log = container = varEl = null;
-
-		if (changesData[i].res === 0 || changesData[i].res === 7) {
-		} else if (path[0] === 'log') {
-			log = JAK.gel(td.hash2Id[path[1]]);
-			container = td.dumps[td.indexes[log.logId - 1]].objects[parseInt(path[2])];
-			varEl = td.findVarEl(container, path.slice(3), changesData[i].type);
-		} else {
-			container = JAK.gel(td.hash2Id[path[1]]);
-			varEl = td.findVarEl(container, path.slice(2), changesData[i].type);
-		}
-
-		if (changesData[i].type === 3) changesData[i].value = JSON.parse(changesData[i].value);
-
-		if (changesData[i].oriVar) changesData[i].oriVar = td.createOriVar(changesData[i].oriVar, changesData[i].res % 2);
-
-		if (varEl) {
-			varEl = td.duplicateNode(varEl);
-			varEl.title = td.formatJson(changesData[i].value);
-		}
-
-		change = td.createChange(changesData[i], container, varEl, log);
-		change.valid = true;
-		change.formated = true;
-		if (change.resEl && changesData[i].fullHeight === 1) td.switchFullHeight(change.resEl, 2);
-	}
-	td.updateChangeList();
-};
-
-td.createOriVar = function(oriVar, changed) {
-	var el = JAK.mel('div', {'className': 'nd-titled nd-ori-var' + (changed ? ' nd-changed' : ''), 'title': ' '});
-	el.innerHTML = oriVar + '$';
-	return el;
-};
-
-td.findVarEl = function(el, path, type) {
-	if (typeof path[0] === 'undefined') return false;
-	var i = 0, j, child;
-
-	if (path[0][0] === '#' || path[0][0] === '*') path[0] = path[0].slice(1);
-	var step = parseInt(path[0][0]);
-
-	if (step === 9) return JAK.DOM.getElementsByClass('nd-top', el)[0] || null;
-	else if (step >= 7) {
-		if (type % 2) {
-			for (j = el.childNodes.length; i < j; ++i) {
-				child = el.childNodes[i];
-				if (child.nodeType === 1) {
-					if (JAK.DOM.hasClass(child, 'nd-toggle')) child = child.firstChild;
-					if (child.className === 'nd-array' && child.getAttribute('data-pk') === path[0]) return child;
-				}
-			}
-		} else {
-			for (j = el.childNodes.length; i < j; ++i) {
-				if (el.childNodes[i].nodeType === 1 && el.childNodes[i].className === 'nd-key' && el.childNodes[i].innerHTML === path[0].slice(1)) {
-					return el.childNodes[i];
-				}
-			}
-		}
-	} else {
-		for (j = el.childNodes.length; i < j; ++i) {
-			if (el.childNodes[i].nodeType === 1 && el.childNodes[i].getAttribute('data-pk') === path[0]) {
-				return td.findVarEl(el.childNodes[i], path.slice(1), type);
-			}
-		}
-	}
-	return false;
+	td.setTitlesData(lastReqeust['titles']);
 };
 
 td.ffPreventWheelDouble = function(e) {
@@ -1298,7 +1229,6 @@ td.showTimer = function(e) {
 };
 
 td.showTitle = function() {
-	var tdTitleRows, tdParents;
 	var el = td.titleShowData.element;
 	var tar = td.titleShowData.tar;
 
@@ -1315,39 +1245,7 @@ td.showTitle = function() {
 	}
 
 	if (td.activeTitle === null && el.tdTitle.style.display !== 'block') {
-		el.tdTitle.style.display = 'block';
-
-		if (!el.tdTitle.hasOwnProperty('oriWidth')) {
-			if ((tdParents = td.getParents(el)).length) el.tdTitle.parents = tdParents;
-			el.tdTitle.style.position = 'fixed';
-			el.tdTitle.oriWidth = el.tdTitle.clientWidth;
-			el.tdTitle.oriHeight = el.tdTitle.clientHeight;
-			tdTitleRows = el.tdTitle.tdInner.childNodes;
-			for (var i = 0, j = tdTitleRows.length, c = 1; i < j; ++i) {
-				if (tdTitleRows[i].nodeType === 1 && tdTitleRows[i].tagName.toLowerCase() === 'i' && ++c % 2) {
-					tdTitleRows[i].className = "nd-even";
-				}
-			}
-			if (el.tdTitle.id === 'controlTitle') {
-				el.tdTitle.menuWidth = el.tdTitle.oriWidth;
-				el.tdTitle.menuHeight = el.tdTitle.oriHeight;
-				td.tdChangeList.style.display = 'block';
-			}
-		}
-		if (el.tdTitle.id === 'controlTitle') {
-			el.tdTitle.style.width = 'auto';
-			el.tdTitle.oriWidth = Math.max(el.tdTitle.menuWidth, td.tdChangeList.clientWidth);
-			el.tdTitle.oriHeight = el.tdTitle.menuHeight + (el.tdTitle.changesHeight = td.tdChangeList.clientHeight);
-		}
-		if (tdParents = tdParents || el.tdTitle.parents) {
-			for (var k = tdParents.length; k-- > 0;) {
-				if (tdParents[k].hasOwnProperty('activeChilds')) {
-					tdParents[k].activeChilds.push(el.tdTitle);
-				} else tdParents[k].activeChilds = [el.tdTitle];
-			}
-		}
-
-		td.visibleTitles.push(el.tdTitle);
+		td.displayTitle(el.tdTitle);
 		td.keepMaxZIndex(el.tdTitle);
 		td.scrollTitle = td.activeTitle = el.tdTitle;
 	} else if (tar.nodeType === 1 && JAK.DOM.hasClass(tar, 'nd-titled')) {
@@ -1363,6 +1261,46 @@ td.showTitle = function() {
 	td.titleAutosize();
 
 	return false;
+};
+
+td.displayTitle = function(title) {
+	if (title.style.display === 'block' || td.visibleTitles.indexOf(title) !== -1) return false;
+
+	var tdParents, tdTitleRows;
+	title.style.display = 'block';
+
+	if (!title.hasOwnProperty('oriWidth')) {
+		if ((tdParents = td.getParents(title)).length) title.parents = tdParents;
+		title.style.position = 'fixed';
+		title.oriWidth = title.clientWidth;
+		title.oriHeight = title.clientHeight;
+		tdTitleRows = title.tdInner.childNodes;
+		for (var i = 0, j = tdTitleRows.length, c = 1; i < j; ++i) {
+			if (tdTitleRows[i].nodeType === 1 && tdTitleRows[i].tagName.toLowerCase() === 'i' && ++c % 2) {
+				tdTitleRows[i].className = "nd-even";
+			}
+		}
+		if (title.id === 'controlTitle') {
+			title.menuWidth = title.oriWidth;
+			title.menuHeight = title.oriHeight;
+			td.tdChangeList.style.display = 'block';
+		}
+	}
+	if (title.id === 'controlTitle') {
+		title.style.width = 'auto';
+		title.oriWidth = Math.max(title.menuWidth, td.tdChangeList.clientWidth);
+		title.oriHeight = title.menuHeight + (title.changesHeight = td.tdChangeList.clientHeight);
+	}
+	if (tdParents = tdParents || title.parents) {
+		for (var k = tdParents.length; k-- > 0;) {
+			if (tdParents[k].hasOwnProperty('activeChilds')) {
+				tdParents[k].activeChilds.push(title);
+			} else tdParents[k].activeChilds = [title];
+		}
+	}
+
+	td.visibleTitles.push(title);
+	return true;
 };
 
 td.removeFromParents = function(el) {
@@ -1691,7 +1629,7 @@ td.readConsoleKeyPress = function(e) {
 };
 
 td.readKeyDown = function(e) {
-	var i, j, tdNext, title;
+	var i, j, tdNext;
 
 	if (e.shiftKey) {
 		if (e.keyCode === 13 && td.tdConsole) return td.tdConsole.callback();
@@ -1729,20 +1667,7 @@ td.readKeyDown = function(e) {
 			if (!(td.visibleTitles.length - (td.activeTitle === null ? 0 : 1)) || !confirm('Opravdu resetovat nastaveni titulku?')) {
 				return true;
 			}
-			if (td.titleHideTimeout) {
-				window.clearTimeout(td.titleHideTimeout);
-				td.titleHideTimeout = null;
-			}
-			for (i = td.visibleTitles.length; i-- > 0;) {
-				title = td.visibleTitles[i];
-				JAK.DOM.setStyle(title, {'display': 'none', 'zIndex': 99});
-				JAK.DOM.removeClass(title, 'nd-pinned');
-				title.pinned = false;
-				title.data.left = title.data.top = title.data.width = title.data.height = null;
-			}
-			td.visibleTitles.length = 0;
-			td.zIndexMax = 100;
-			td.scrollTitle = td.activeTitle = null;
+			td.hideAllTitles();
 			return false;
 		} else if (e.keyCode === 13 && td.tdConsole) {
 			JAK.Events.stopEvent(e);
@@ -1760,6 +1685,26 @@ td.readKeyDown = function(e) {
 		}
 	}
 	return true;
+};
+
+td.hideAllTitles = function() {
+	var i, title;
+
+	if (td.titleHideTimeout) {
+		window.clearTimeout(td.titleHideTimeout);
+		td.titleHideTimeout = null;
+	}
+	for (i = td.visibleTitles.length; i-- > 0;) {
+		title = td.visibleTitles[i];
+		JAK.DOM.setStyle(title, {'display': 'none', 'zIndex': 99});
+		JAK.DOM.removeClass(title, 'nd-pinned');
+		title.pinned = false;
+		title.data.left = title.data.top = title.data.width = title.data.height = null;
+	}
+
+	td.visibleTitles.length = 0;
+	td.zIndexMax = 100;
+	td.scrollTitle = td.activeTitle = null;
 };
 
 td.switchTitleHide = function(force) {
@@ -1830,6 +1775,21 @@ td.htmlEncode = function(text) {
 	return retVal;
 };
 
+td.getTitlesData = function() {
+	var i, j, titlesData = [], title;
+	for (i = 0, j = td.visibleTitles.length; i < j; ++i) {
+		if ((title = td.visibleTitles[i]).pinned) {
+			titlesData.push({
+				'path': td.getTitlePath(title),
+				'data': JSON.parse(JSON.stringify(title.data)),
+				'scrollTop': parseInt(title.scrollTop),
+				'zIndex': parseInt(title.style.zIndex)
+			});
+		}
+	}
+	return titlesData;
+};
+
 td.getTitlePath = function(title) {
 	var revPath = [], parent = title.parentNode, titleType = parseInt(title.getAttribute('data-tt')), key;
 
@@ -1875,21 +1835,35 @@ td.getTitlePath = function(title) {
 	return(revPath.reverse().join('§'));
 };
 
-td.getTitlesData = function() {
-	var i, j, titlesData = [], title;
-	for (i = 0, j = td.visibleTitles.length; i < j; ++i) {
-		if ((title = td.visibleTitles[i]).pinned) {
-			titlesData.push({
-				'path': td.getTitlePath(title),
-				'data': JSON.parse(JSON.stringify(title.data)),
-				'css': {
-					'scrollTop': parseInt(title.scrollTop),
-					'zIndex': parseInt(title.style.zIndex)
-				}
-			});
+td.setTitlesData = function(titlesData) {
+	var i, j, k, title;
+
+	td.hideAllTitles();
+
+	for (i = 0, j = titlesData.length; i < j; ++i) {
+		if (title = td.getTitle(titlesData[i]['path'])) {
+			title.data = titlesData[i]['data'];
+			td.displayTitle(title);
+			JAK.DOM.addClass(title, 'nd-pinned');
+			title.pinned = true;
+			title.style.zIndex = titlesData[i]['zIndex'];
+			if (title.data['left'] !== null) title.style.left = title.data['left'] + 'px';
+			if (title.data['top'] !== null) title.style.top = title.data['top'] + 'px';
+			if (title.data['width'] !== null) title.style.width = title.data['width'] + 'px';
+			if (title.data['height'] !== null) title.style.height = title.data['height'] + 'px';
+			td.titleAutosize(title);
+			title.scrollTop = titlesData[i]['scrollTop'];
 		}
 	}
-	return titlesData;
+
+	return true;
+};
+
+td.getTitle = function(path) {
+	if (path === '5') return td.control.controlTitle;
+	else if (path === '6') return td.control.helpTitle;
+
+	return false;
 };
 
 td.getChangesData = function() {
@@ -1904,6 +1878,79 @@ td.getChangesData = function() {
 		]);
 	}
 	return changesData;
+};
+
+td.setChangesData = function(changesData) {
+	var path, log, container, varEl, change;
+	for (var i = 0, j = changesData.length; i < j; ++i) {
+		path = changesData[i].path.split(',');
+		log = container = varEl = null;
+
+		if (changesData[i].res === 0 || changesData[i].res === 7) {
+		} else if (path[0] === 'log') {
+			log = JAK.gel(td.hash2Id[path[1]]);
+			container = td.dumps[td.indexes[log.logId - 1]].objects[parseInt(path[2])];
+			varEl = td.findVarEl(container, path.slice(3), changesData[i].type);
+		} else {
+			container = JAK.gel(td.hash2Id[path[1]]);
+			varEl = td.findVarEl(container, path.slice(2), changesData[i].type);
+		}
+
+		if (changesData[i].type === 3) changesData[i].value = JSON.parse(changesData[i].value);
+
+		if (changesData[i].oriVar) changesData[i].oriVar = td.createOriVar(changesData[i].oriVar, changesData[i].res % 2);
+
+		if (varEl) {
+			varEl = td.duplicateNode(varEl);
+			varEl.title = td.formatJson(changesData[i].value);
+		}
+
+		change = td.createChange(changesData[i], container, varEl, log);
+		change.valid = true;
+		change.formated = true;
+		if (change.resEl && changesData[i].fullHeight === 1) td.switchFullHeight(change.resEl, 2);
+	}
+	td.updateChangeList();
+};
+
+td.createOriVar = function(oriVar, changed) {
+	var el = JAK.mel('div', {'className': 'nd-titled nd-ori-var' + (changed ? ' nd-changed' : ''), 'title': ' '});
+	el.innerHTML = oriVar + '$';
+	return el;
+};
+
+td.findVarEl = function(el, path, type) {
+	if (typeof path[0] === 'undefined') return false;
+	var i = 0, j, child;
+
+	if (path[0][0] === '#' || path[0][0] === '*') path[0] = path[0].slice(1);
+	var step = parseInt(path[0][0]);
+
+	if (step === 9) return JAK.DOM.getElementsByClass('nd-top', el)[0] || null;
+	else if (step >= 7) {
+		if (type % 2) {
+			for (j = el.childNodes.length; i < j; ++i) {
+				child = el.childNodes[i];
+				if (child.nodeType === 1) {
+					if (JAK.DOM.hasClass(child, 'nd-toggle')) child = child.firstChild;
+					if (child.className === 'nd-array' && child.getAttribute('data-pk') === path[0]) return child;
+				}
+			}
+		} else {
+			for (j = el.childNodes.length; i < j; ++i) {
+				if (el.childNodes[i].nodeType === 1 && el.childNodes[i].className === 'nd-key' && el.childNodes[i].innerHTML === path[0].slice(1)) {
+					return el.childNodes[i];
+				}
+			}
+		}
+	} else {
+		for (j = el.childNodes.length; i < j; ++i) {
+			if (el.childNodes[i].nodeType === 1 && el.childNodes[i].getAttribute('data-pk') === path[0]) {
+				return td.findVarEl(el.childNodes[i], path.slice(1), type);
+			}
+		}
+	}
+	return false;
 };
 
 td.getTdData = function(allData) {
