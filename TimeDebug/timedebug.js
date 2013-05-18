@@ -1671,8 +1671,7 @@ td.readKeyDown = function(e) {
 			return false;
 		} else if (e.keyCode === 13 && td.tdConsole) {
 			JAK.Events.stopEvent(e);
-		}
-		else if (e.keyCode === 32 && !td.tdConsole) {
+		} else if (e.keyCode === 32 && !td.tdConsole) {
 			td.switchTitleHide();
 			return false;
 		} else if (e.keyCode === 9 && td.tdConsole) {
@@ -1836,12 +1835,12 @@ td.getTitlePath = function(title) {
 };
 
 td.setTitlesData = function(titlesData) {
-	var i, j, k, title;
+	var i, j, title;
 
 	td.hideAllTitles();
 
 	for (i = 0, j = titlesData.length; i < j; ++i) {
-		if (title = td.getTitle(titlesData[i]['path'])) {
+		if (title = td.getTitle(titlesData[i]['path'].split('§'))) {
 			title.data = titlesData[i]['data'];
 			td.displayTitle(title);
 			JAK.DOM.addClass(title, 'nd-pinned');
@@ -1860,8 +1859,13 @@ td.setTitlesData = function(titlesData) {
 };
 
 td.getTitle = function(path) {
-	if (path === '5') return td.control.controlTitle;
-	else if (path === '6') return td.control.helpTitle;
+	console.debug(path);
+	
+	if (path[0] === '5') return td.control.controlTitle;
+	else if (path[0] === '6') return td.control.helpTitle;
+	else if (path[0] === '1') {
+
+	}
 
 	return false;
 };
