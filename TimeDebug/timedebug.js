@@ -218,9 +218,10 @@ td.init = function(logId) {
 };
 
 td.loadLastRequest = function() {
-	var lastReqeust = b62s.decompress(b62s.base32kTo8(localStorage.tdLastRequest));
-	console.debug(lastReqeust);
+	var lastReqeust = JSON.parse(b62s.decompress(b62s.base32kTo8(localStorage.tdLastRequest)));
 	delete(localStorage.tdLastRequest);
+
+	td.setTdData(lastReqeust['config']);
 };
 
 td.loadChanges = function(changesData) {
@@ -1907,8 +1908,8 @@ td.getChangesData = function() {
 
 td.getTdData = function(allData) {
 	var tdData = {
-		'tdFullWidth': td.tdFullWidth,
 		'tdWidth': td.tdWidth,
+		'tdFullWidth': td.tdFullWidth,
 		'logRowActiveHash': td.logRowActive === null ? '' : td.logRowActive.hash,
 		'logRowsChosenHashes': [],
 		'showLogRow': td.deleteChange.showLogRow,
@@ -1924,22 +1925,22 @@ td.getTdData = function(allData) {
 
 	for (var i = 0, j = td.logRows.length; i < j; ++i) if (td.logRowsChosen[i]) tdData.logRowsChosenHashes.push(td.logRows[i].hash);
 
-	tdData.styles = {'tdOuterWrapper': {'width': td.wrapperWidth, 'height': td.wrapperHeight}};
+	tdData.styles = [{'el': 'tdOuterWrapper', 'css': {'width': td.wrapperWidth, 'height': td.wrapperHeight}}];
 
-	tdData.scrolls = {
-		'tdContainer': {'scrollLeft': td.tdContainer.scrollLeft, 'scrollTop': td.tdContainer.scrollTop},
-		'logContainer': {'scrollLeft': td.logContainer.scrollLeft, 'scrollTop': td.logContainer.scrollTop}
-	};
+	tdData.scrolls = [
+		{'el': 'tdContainer', 'scrollLeft': td.tdContainer.scrollLeft, 'scrollTop': td.tdContainer.scrollTop},
+		{'el': 'logContainer', 'scrollLeft': td.logContainer.scrollLeft, 'scrollTop': td.logContainer.scrollTop}
+	];
 
 	return tdData;
 };
 
 td.setTdData = function(tdData) {
-	td.switchFullWidth(tdData['tdfullWidth'] ? 2 : 1);
-	document.body.style.marginLeft = td.tdContainer.style.width = td.actionData.element.style.left = (td.tdWidth = tdData['tdWidth']) + 'px';
-	td.windowResize();
+	document.body.style.marginLeft = td.tdContainer.style.width = td.control.style.left = (td.tdWidth = tdData['tdWidth']) + 'px';
 
-	var i, logId;
+	td.switchFullWidth(tdData['tdFullWidth'] ? 2 : 1);
+
+	var i, logId, rec;
 	if (logId = td.hash2LogId[tdData['logRowActiveHash']]) td.showDump(logId);
 
 	for (i = td.logRows.length; i-- > 0;) {
@@ -1962,14 +1963,15 @@ td.setTdData = function(tdData) {
 
 	td.switchTitleHide(tdData['hide']);
 
-//
-//	tdData.styles = {'tdOuterWrapper': {'width': td.wrapperWidth, 'height': td.wrapperHeight}};
-//
-//	tdData.scrolls = {
-//		'tdContainer': {'scrollLeft': td.tdContainer.scrollLeft, 'scrollTop': td.tdContainer.scrollTop},
-//		'logContainer': {'scrollLeft': td.logContainer.scrollLeft, 'scrollTop': td.logContainer.scrollTop}
-//	};
+	for (i = tdData['styles'].length; i-- > 0;) JAK.DOM.setStyle(td[tdData['styles'][i]['el']], tdData['styles'][i]['css']);
 
+	for (i = tdData['scrolls'].length; i-- > 0;) {
+		rec = tdData['scrolls'][i];
+		td[rec['el']].scrollLeft = rec['scrollLeft'];
+		td[rec['el']].scrollTop = rec['scrollTop'];
+	}
+
+	td.windowResize();
 };
 
 td.sendChanges = function(e) {
