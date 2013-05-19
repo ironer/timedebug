@@ -1855,6 +1855,7 @@ td.setTitlesData = function(titlesData) {
 		}
 	}
 
+	td.getMaxZIndex();
 	return true;
 };
 
@@ -1873,7 +1874,13 @@ td.getTitle = function(path) {
 		else if (!(el = el.tdTitle)) return false;
 
 		if (path[3] === '0') return el;
+		else if (path['3'] === '9') {
+			if (!(el = JAK.DOM.getElementsByClass('nd-top', parent)[0])) return false;
+			else if (!(el = el.tdTitle)) return false;
+			return el;
+		} else {
 
+		}
 //		} else if (path['3'] === '9')
 
 //		if (JAK.DOM.hasClass(parent, 'nd-ori-var') && (parent = parent.parentNode)) revPath.push('0');
@@ -1913,6 +1920,10 @@ td.getTitle = function(path) {
 	}
 
 	return false;
+};
+
+td.findTitleInVar = function(path, parent) {
+
 };
 
 td.getChangesData = function() {

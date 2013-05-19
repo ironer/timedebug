@@ -283,19 +283,22 @@ pre.nd-location {
 	background: #fbb;
 }
 .nd-change {
+	font-size: 14px;
+	font-family: "Times New Roman", Georgia, Serif;
 	position: relative;
 	margin: 0;
 	padding: 0 12px;
 	height: 16px;
+	line-height: 14px;
 	overflow: hidden;
 }
 .nd-res:after {
 	display: inline-block;
 	height: 16px;
 	width: 6px;
+	text-align: center;
 	font-size: 10px;
 	padding-left: 1px;
-	margin: 0 -6px 0 -1px;
 	color: #fff;
 	background: #a00;
 	content: " ";
@@ -372,9 +375,12 @@ pre.nd-location {
 	color: #00e;
 }
 .nd-unset {
+	display: inline-block;
 	color: #fdc;
 	background: #900;
-	border-radius: 6px;
+	border-radius: 8px;
+	height: 16px;
+	padding: 0 2px;
 }
 .nd-control a {
 	text-decoration: none;
