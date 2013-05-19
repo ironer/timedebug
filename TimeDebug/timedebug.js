@@ -1860,11 +1860,56 @@ td.setTitlesData = function(titlesData) {
 
 td.getTitle = function(path) {
 	console.debug(path);
+	var i, el, parent = null;
 	
 	if (path[0] === '5') return td.control.controlTitle;
 	else if (path[0] === '6') return td.control.helpTitle;
 	else if (path[0] === '1') {
+		for (i = td.changes.length; i-- > 0;) {
+			if (td.changes[i].data.path === path[1] && td.changes[i].data.type % 2 === ~~path[2] % 2 && (parent = td.changes[i])) break;
+		}
+		if (!parent) return false;
+		if (!(el = JAK.DOM.getElementsByClass('nd-ori-var', parent)[0])) return false;
+		else if (!(el = el.tdTitle)) return false;
 
+		if (path[3] === '0') return el;
+
+//		} else if (path['3'] === '9')
+
+//		if (JAK.DOM.hasClass(parent, 'nd-ori-var') && (parent = parent.parentNode)) revPath.push('0');
+//		else if (JAK.DOM.hasClass(parent, 'nd-top')) {
+//			while ((parent = parent.parentNode) && !JAK.DOM.hasClass(parent, 'nd-change')) {}
+//			revPath.push('9');
+//		} else {
+//			revPath.push(title.getAttribute('data-pk'));
+//			while ((parent = parent.parentNode) && !JAK.DOM.hasClass(parent, 'nd-change')) {
+//				if (key = parent.getAttribute('data-pk')) revPath.push(key);
+//			}
+//		}
+//		revPath.push(parent.data.type, parent.data.path, 1);
+	} else if (path[0] === 2) {
+//		revPath.push(title.getAttribute('data-pk'));
+//		while ((parent = parent.parentNode) && !JAK.DOM.hasClass(parent, 'nd-log')) {
+//			if (key = parent.getAttribute('data-pk')) revPath.push(key);
+//		}
+//		revPath.push(parent.hash, 2);
+	} else if (path[0] === 3) {
+//		revPath.push(title.getAttribute('data-pk'));
+//		while ((parent = parent.parentNode) && !JAK.DOM.hasClass(parent, 'nd-view-dump')) {
+//			if (key = (parent.getAttribute('data-pk') || parent.getAttribute('data-tdindex'))) revPath.push(key);
+//		}
+//		revPath.push(parent.logRow.hash, 3);
+	} else if (path[0] === 4) {
+//		if (JAK.DOM.hasClass(parent, 'nd-top')) {
+//			while ((parent = parent.parentNode) && !JAK.DOM.hasClass(parent, 'nd-dump')) {}
+//			revPath.push('9');
+//		} else {
+//			revPath.push(title.getAttribute('data-pk'));
+//			while ((parent = parent.parentNode) && !JAK.DOM.hasClass(parent, 'nd-dump')) {
+//				if (key = parent.getAttribute('data-pk')) revPath.push(key);
+//			}
+//		}
+//		revPath.push(parent.hash, 4);
 	}
 
 	return false;
