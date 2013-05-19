@@ -98,6 +98,7 @@ pre.nd-location {
 	overflow: hidden;
 	line-height: 16px;
 	font-size: 13px;
+	letter-spacing: 0px;
 	color: #000;
 	-webkit-touch-callout: text;
 	-webkit-user-select: text;
@@ -284,7 +285,7 @@ pre.nd-location {
 }
 .nd-change {
 	font-size: 14px;
-	font-family: "Times New Roman", Georgia, Serif;
+	font-family: "Times New Roman", Times, serif;
 	position: relative;
 	margin: 0;
 	padding: 0 12px;
@@ -355,7 +356,9 @@ pre.nd-location {
 	height: 16px;
 	font-weight: bold;
 	text-align: left;
-	padding-left: 5px;
+	font-size: 13px;
+	padding: 1px 0 0 3px;
+	font-family: Courier, monospace;
 	margin: 0;
 	color: #c00;
 	background: -moz-linear-gradient(left, rgba(255,255,238,1) 0%, rgba(255,255,238,1) 50%, rgba(255,255,238,0) 100%);
@@ -406,7 +409,8 @@ pre.nd-location {
 	height: 16px;
 	font-weight: bold;
 	text-align: right;
-	padding-right: 5px;
+	padding-right: 2px;
+	font-family: Courier, monospace;
 	margin: 0;
 	color: #060;
 	background: -moz-linear-gradient(left, rgba(255,255,238,0) 0%, rgba(255,255,238,1) 50%, rgba(255,255,238,1) 100%);

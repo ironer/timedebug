@@ -32,7 +32,8 @@ class TimeDebug {
 			DUMP_ID = 'dumpId', // id for .nd 'pre' in HTML form
 			TDVIEW_INDEX = 'tdIndex', // data-tdindex of .nd 'pre' in tdView
 			TITLE_TYPE = 'titleType', // data for data-tt for titles (1: change, 2: method, defaults to 3: log, 4: method)
-			TITLE_KEY = 'titleKey'; // data for data-pk for titles
+			TITLE_KEY = 'titleKey', // data for data-pk for titles
+			TITLE_PATH = 'titlePath'; // path for finding titles in js
 
 
 	private static $initialized = FALSE;
