@@ -359,7 +359,7 @@ td.changeAction = function(e, el) {
 				if ((formatedJson = td.formatJson(this.data.value)) === false) {
 					this.formated = false;
 				} else {
-					this.varEl.title = this.title = formatedJson;
+					this.varEl.title = this.title = jsonString = formatedJson;
 					this.formated = update = true;
 				}
 			}
@@ -1879,7 +1879,10 @@ td.getTitle = function(path) {
 			else if (!(el = el.tdTitle)) return false;
 			return el;
 		} else {
-
+			if (!(el = JAK.DOM.getElementsByClass('nd-top', parent)[0])) return false;
+			else if (!(el = el.tdTitle)) return false;
+			return el;
+			td.findTitleInVar();
 		}
 //		} else if (path['3'] === '9')
 

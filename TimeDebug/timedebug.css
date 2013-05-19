@@ -290,6 +290,7 @@ pre.nd-location {
 	padding: 0 12px;
 	height: 16px;
 	line-height: 14px;
+	letter-spacing: 1px;
 	overflow: hidden;
 }
 .nd-res:after {
