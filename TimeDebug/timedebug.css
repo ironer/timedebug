@@ -61,7 +61,7 @@ pre.nd-location {
 	border-radius: 5px;
 	top: 0;
 	left: 0;
-	box-shadow: 3px 2px 8px #555;
+	box-shadow: 1px 1px 6px #555;
 	padding: 2px 0 0;
 	text-indent: 0;
 	overflow-x: hidden;
@@ -118,10 +118,10 @@ pre.nd-location {
 .nd-inner i b {
 	color: #e23;
 }
-.nd-color i.nd-even {
+.nd-title i.nd-even {
 	color: #921;
 }
-.nd-color i.nd-even b {
+.nd-title i.nd-even b {
 	color: #000;
 }
 .nd-number {
@@ -207,7 +207,6 @@ pre.nd-location {
 	font-size: 13px;
 }
 .nd-td .nd-valid-json, .nd-td .nd-invalid-json, .nd-td .nd-result {
-	font-weight: bold;
 	color: #008;
 	line-height: 16px;
 	width: auto;
@@ -257,7 +256,7 @@ pre.nd-location {
 	color: #000;
 	background: #fc8;
 	z-index: 10;
-	box-shadow: 3px 2px 8px #888;
+	box-shadow: 0 4px 0 #fff;
 }
 .nd-td .nd-ok {
 	color: #050;
@@ -379,12 +378,7 @@ pre.nd-location {
 	color: #00e;
 }
 .nd-unset {
-	display: inline-block;
-	color: #fdc;
-	background: #900;
-	border-radius: 8px;
-	height: 16px;
-	padding: 0 2px;
+	color: #a00;
 }
 .nd-control a {
 	text-decoration: none;

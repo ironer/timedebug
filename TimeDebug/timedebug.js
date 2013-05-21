@@ -5,6 +5,7 @@
  * used sources: Seznam's JAK library (http://seznam.cz)
  */
 
+// TODO: nd-unset jinym fontem
 // TODO: ulozit nastaveni do localstorage a/nebo vyexportovat do konzole
 // TODO: nacist nastaveni z localstorage a/nebo z konzole
 
@@ -174,11 +175,11 @@ td.init = function(logId) {
 	td.tdContainer.appendChild(td.tdOuterWrapper);
 	document.body.insertBefore(td.tdContainer, document.body.childNodes[0]);
 
-	td.control.innerHTML = '<span class="nd-titled"><span id="controlTitle" class="nd-title" data-tt="5"><strong class="nd-inner">'
+	td.control.innerHTML = '<span class="nd-titled"><span id="controlTitle" class="nd-title"><strong class="nd-inner">'
 			+ '<hr><div class="nd-menu">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'
 			+ (td.local ? '<span id="tdMenuSend"><b>odeslat</b></span>&nbsp;&nbsp;&nbsp;&nbsp;' : '')
 			+ '<span id="tdMenuRestore">obnovit</span>&nbsp;&nbsp;&nbsp;&nbsp;'
-			+ '<span class="nd-titled"><span id="helpTitle" class="nd-title" data-tt="6"><strong class="nd-inner">'
+			+ '<span class="nd-titled"><span id="helpTitle" class="nd-title"><strong class="nd-inner">'
 			+ td.help
 			+ '</strong></span>napoveda</span>'
 			+ '     |&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span>export</span>'
@@ -453,7 +454,7 @@ td.setLocationHashes = function(e, hashes) {
 };
 
 td.printPath = function(change) {
-	var path = change.data.path.split(',');
+	var path = change.data.path.split('§');
 	var i, j = path.length, k, close = '', key, retKey, retVal = '', elStart = '', elEnd = '';
 
 	if (path[0] === 'log') {
@@ -494,7 +495,7 @@ td.printPath = function(change) {
 	else retVal += !close || key == parseInt(key) ? retKey + close : "'" + retKey + "'" + close;
 
 	if (change.data.type % 2) retVal += change.valid && typeof change.data.value === 'object' ? ' +=' : '[] =';
-	else if (change.data.type) retVal += ' <b class="nd-unset">( unset )</b>';
+	else if (change.data.type) retVal += ' <b class="nd-unset">(un$et)</b>';
 	else retVal += ' =';
 
 	return retVal;
@@ -751,7 +752,7 @@ td.getVarData = function(el) {
 		}
 	}
 
-	return {'path': revPath.reverse().join(','), 'container': el, 'logRow': logRow};
+	return {'path': revPath.reverse().join('§'), 'container': el, 'logRow': logRow};
 };
 
 td.saveVarChange = function(type, varEl) {
@@ -1779,7 +1780,7 @@ td.getTitlesData = function() {
 	for (i = 0, j = td.visibleTitles.length; i < j; ++i) {
 		if ((title = td.visibleTitles[i]).pinned) {
 			titlesData.push({
-				'path': td.getTitlePath(title),
+				'id': title.id,
 				'data': JSON.parse(JSON.stringify(title.data)),
 				'scrollTop': parseInt(title.scrollTop),
 				'zIndex': parseInt(title.style.zIndex)
@@ -1789,58 +1790,13 @@ td.getTitlesData = function() {
 	return titlesData;
 };
 
-td.getTitlePath = function(title) {
-	var revPath = [], parent = title.parentNode, titleType = parseInt(title.getAttribute('data-tt')), key;
-
-	if (titleType > 4) {
-		revPath.push(titleType);
-	} else if (titleType === 1) {
-		if (JAK.DOM.hasClass(parent, 'nd-ori-var') && (parent = parent.parentNode)) revPath.push('0');
-		else if (JAK.DOM.hasClass(parent, 'nd-top')) {
-			while ((parent = parent.parentNode) && !JAK.DOM.hasClass(parent, 'nd-change')) {}
-			revPath.push('9');
-		} else {
-			revPath.push(title.getAttribute('data-pk'));
-			while ((parent = parent.parentNode) && !JAK.DOM.hasClass(parent, 'nd-change')) {
-				if (key = parent.getAttribute('data-pk')) revPath.push(key);
-			}
-		}
-		revPath.push(parent.data.type, parent.data.path, 1);
-	} else if (titleType === 2) {
-		revPath.push(title.getAttribute('data-pk'));
-		while ((parent = parent.parentNode) && !JAK.DOM.hasClass(parent, 'nd-log')) {
-			if (key = parent.getAttribute('data-pk')) revPath.push(key);
-		}
-		revPath.push(parent.hash, 2);
-	} else if (titleType === 3) {
-		revPath.push(title.getAttribute('data-pk'));
-		while ((parent = parent.parentNode) && !JAK.DOM.hasClass(parent, 'nd-view-dump')) {
-			if (key = (parent.getAttribute('data-pk') || parent.getAttribute('data-tdindex'))) revPath.push(key);
-		}
-		revPath.push(parent.logRow.hash, 3);
-	} else if (titleType === 4) {
-		if (JAK.DOM.hasClass(parent, 'nd-top')) {
-			while ((parent = parent.parentNode) && !JAK.DOM.hasClass(parent, 'nd-dump')) {}
-			revPath.push('9');
-		} else {
-			revPath.push(title.getAttribute('data-pk'));
-			while ((parent = parent.parentNode) && !JAK.DOM.hasClass(parent, 'nd-dump')) {
-				if (key = parent.getAttribute('data-pk')) revPath.push(key);
-			}
-		}
-		revPath.push(parent.hash, 4);
-	}
-
-	return(revPath.reverse().join('§'));
-};
-
 td.setTitlesData = function(titlesData) {
 	var i, j, title;
 
 	td.hideAllTitles();
 
 	for (i = 0, j = titlesData.length; i < j; ++i) {
-		if (title = td.getTitle(titlesData[i]['path'].split('§'))) {
+		if (title = JAK.gel(titlesData[i]['id'])) {
 			title.data = titlesData[i]['data'];
 			td.displayTitle(title);
 			JAK.DOM.addClass(title, 'nd-pinned');
@@ -1857,76 +1813,6 @@ td.setTitlesData = function(titlesData) {
 
 	td.getMaxZIndex();
 	return true;
-};
-
-td.getTitle = function(path) {
-	console.debug(path);
-	var i, el, parent = null;
-	
-	if (path[0] === '5') return td.control.controlTitle;
-	else if (path[0] === '6') return td.control.helpTitle;
-	else if (path[0] === '1') {
-		for (i = td.changes.length; i-- > 0;) {
-			if (td.changes[i].data.path === path[1] && td.changes[i].data.type % 2 === ~~path[2] % 2 && (parent = td.changes[i])) break;
-		}
-		if (!parent) return false;
-		if (!(el = JAK.DOM.getElementsByClass('nd-ori-var', parent)[0])) return false;
-		else if (!(el = el.tdTitle)) return false;
-
-		if (path[3] === '0') return el;
-		else if (path['3'] === '9') {
-			if (!(el = JAK.DOM.getElementsByClass('nd-top', parent)[0])) return false;
-			else if (!(el = el.tdTitle)) return false;
-			return el;
-		} else {
-			if (!(el = JAK.DOM.getElementsByClass('nd-top', parent)[0])) return false;
-			else if (!(el = el.tdTitle)) return false;
-			return el;
-			td.findTitleInVar();
-		}
-//		} else if (path['3'] === '9')
-
-//		if (JAK.DOM.hasClass(parent, 'nd-ori-var') && (parent = parent.parentNode)) revPath.push('0');
-//		else if (JAK.DOM.hasClass(parent, 'nd-top')) {
-//			while ((parent = parent.parentNode) && !JAK.DOM.hasClass(parent, 'nd-change')) {}
-//			revPath.push('9');
-//		} else {
-//			revPath.push(title.getAttribute('data-pk'));
-//			while ((parent = parent.parentNode) && !JAK.DOM.hasClass(parent, 'nd-change')) {
-//				if (key = parent.getAttribute('data-pk')) revPath.push(key);
-//			}
-//		}
-//		revPath.push(parent.data.type, parent.data.path, 1);
-	} else if (path[0] === 2) {
-//		revPath.push(title.getAttribute('data-pk'));
-//		while ((parent = parent.parentNode) && !JAK.DOM.hasClass(parent, 'nd-log')) {
-//			if (key = parent.getAttribute('data-pk')) revPath.push(key);
-//		}
-//		revPath.push(parent.hash, 2);
-	} else if (path[0] === 3) {
-//		revPath.push(title.getAttribute('data-pk'));
-//		while ((parent = parent.parentNode) && !JAK.DOM.hasClass(parent, 'nd-view-dump')) {
-//			if (key = (parent.getAttribute('data-pk') || parent.getAttribute('data-tdindex'))) revPath.push(key);
-//		}
-//		revPath.push(parent.logRow.hash, 3);
-	} else if (path[0] === 4) {
-//		if (JAK.DOM.hasClass(parent, 'nd-top')) {
-//			while ((parent = parent.parentNode) && !JAK.DOM.hasClass(parent, 'nd-dump')) {}
-//			revPath.push('9');
-//		} else {
-//			revPath.push(title.getAttribute('data-pk'));
-//			while ((parent = parent.parentNode) && !JAK.DOM.hasClass(parent, 'nd-dump')) {
-//				if (key = parent.getAttribute('data-pk')) revPath.push(key);
-//			}
-//		}
-//		revPath.push(parent.hash, 4);
-	}
-
-	return false;
-};
-
-td.findTitleInVar = function(path, parent) {
-
 };
 
 td.getChangesData = function() {
@@ -1946,7 +1832,7 @@ td.getChangesData = function() {
 td.setChangesData = function(changesData) {
 	var path, log, container, varEl, change;
 	for (var i = 0, j = changesData.length; i < j; ++i) {
-		path = changesData[i].path.split(',');
+		path = changesData[i].path.split('§');
 		log = container = varEl = null;
 
 		if (changesData[i].res === 0 || changesData[i].res === 7) {

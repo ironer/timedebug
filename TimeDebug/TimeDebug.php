@@ -31,9 +31,7 @@ class TimeDebug {
 			PARENT_KEY = 'parentKey', // sets parent key for children's div to attribute 'data-pk' for arrays and objects
 			DUMP_ID = 'dumpId', // id for .nd 'pre' in HTML form
 			TDVIEW_INDEX = 'tdIndex', // data-tdindex of .nd 'pre' in tdView
-			TITLE_TYPE = 'titleType', // data for data-tt for titles (1: change, 2: method, defaults to 3: log, 4: method)
-			TITLE_KEY = 'titleKey', // data for data-pk for titles
-			TITLE_PATH = 'titlePath'; // path for finding titles in js
+			TITLE_PATH = 'titlePath'; // path for finding titles in js by id
 
 
 	private static $initialized = FALSE;
@@ -200,7 +198,7 @@ class TimeDebug {
 				self::$request[$i]['type'] = self::$request[$i][2];
 				self::$request[$i]['fullHeight'] = self::$request[$i][3];
 				unset(self::$request[$i][0], self::$request[$i][1], self::$request[$i][2], self::$request[$i][3]);
-				$path = explode(',', self::$request[$i]['path']);
+				$path = explode('§', self::$request[$i]['path']);
 				if ($path[0] === 'dump') {
 					self::$request[$i]['varPath'] = array_slice($path, 2);
 					if (!self::prepareVarPath($i)) {
@@ -321,9 +319,6 @@ class TimeDebug {
 		if (!self::$initialized) throw new Exception("Trida TimeDebug nebyla inicializovana statickou metodou 'init'.");
 		$retChanges = '';
 
-		list($file, $line, $code, $place) = self::findLocation(TRUE);
-		$relative = substr($file, strlen(self::$root));
-
 		if ($reset) {
 			self::$lastRuntime = self::$startTime;
 			self::$lastMemory = self::$startMem;
@@ -343,25 +338,32 @@ class TimeDebug {
 			$textOut = ($path ? '<span class="nd-path">' . ($path = htmlspecialchars(implode('/', array_reverse($path)))) . '</span> ' : '') . $text;
 		}
 
-		if (self::$advancedLog && isset($objects)) {
+		list($file, $line, $code, $place) = self::findLocation(TRUE);
+		$relative = substr($file, strlen(self::$root));
+		$tdParams = ' class="nd-row"';
+
+		if (self::$advancedLog) {
 			$logId = 'l' . self::$idPrefix . '_' . self::incCounter('logs');
 			$logHash = self::getPathHash("$relative|l|$place");
+			$code = str_replace('H@$H', $logHash, $code);
 
-			$dumpVars = array(); $i = 0;
-			foreach($objects as $curObj) {
-				if (isset(self::$request['logs'][$logHash][$i])) $retChanges .= self::updateVar($curObj, self::$request['logs'][$logHash][$i], $logHash);
-				$dumpVars[] = self::toHtml($curObj, array(self::TDVIEW_INDEX => $i++));
+			if (isset($objects)) {
+				$dumpVars = array(); $i = 0;
+				foreach($objects as $curObj) {
+					if (isset(self::$request['logs'][$logHash][$i])) $retChanges .= self::updateVar($curObj, self::$request['logs'][$logHash][$i]);
+					$dumpVars[] = self::toHtml($curObj, array(self::TDVIEW_INDEX => $i, self::TITLE_PATH => '3§' . $logHash . '§' . $i++));
+				}
+				$dump = implode('<hr>', $dumpVars);
+				$dumpMD5 = md5($dump);
+				if (isset(self::$timeDebugMD5[$dumpMD5])) {
+					self::$timeDebug[] = self::$timeDebugMD5[$dumpMD5];
+				} else {
+					self::$timeDebug[] = self::$timeDebugMD5[$dumpMD5] = $cnt = count(self::$timeDebugMD5);
+					echo '<pre id="tdView_' . ++$cnt . '" class="nd-view-dump">' . $dump . '</pre>';
+				}
+				$tdParams = ' data-hash="' . $logHash . '" id="' . $logId . '" class="nd-row nd-log"';
 			}
-			$dump = implode('<hr>', $dumpVars);
-			$dumpMD5 = md5($dump);
-			if (isset(self::$timeDebugMD5[$dumpMD5])) {
-				self::$timeDebug[] = self::$timeDebugMD5[$dumpMD5];
-			} else {
-				self::$timeDebug[] = self::$timeDebugMD5[$dumpMD5] = $cnt = count(self::$timeDebugMD5);
-				echo '<pre id="tdView_' . ++$cnt . '" class="nd-view-dump">' . $dump . '</pre>';
-			}
-			$tdParams = ' data-hash="' . $logHash . '" id="' . $logId . '" class="nd-row nd-log"';
-		} else $tdParams = ' class="nd-row"';
+		}
 
 		echo "<pre" . ($object === NULL ? '' : " data-runtime=\"" . number_format(1000*(microtime(TRUE)-self::$startTime),2,'.','')
 				. "\" data-title=\"" . (empty($path) ? '' : "$path> ") . "$text\"") . "$tdParams>["
@@ -405,12 +407,12 @@ class TimeDebug {
 				$dumpId = 'd' . self::$idPrefix . '_' . self::incCounter('dumps');
 				$dumpHash = self::getPathHash("$relative|d|$place");
 
-				if (isset(self::$request['dumps'][$dumpHash])) echo self::updateVar($var, self::$request['dumps'][$dumpHash], $dumpHash);
+				if (isset(self::$request['dumps'][$dumpHash])) echo self::updateVar($var, self::$request['dumps'][$dumpHash]);
 
-				$options = array(self::DUMP_ID => $dumpId, self::TITLE_TYPE => 4);
+				$options = array(self::DUMP_ID => $dumpId, self::TITLE_PATH => '4§' . $dumpHash);
 			} else {
 				$dumpHash = '';
-				$options = array(self::TITLE_TYPE => 4);
+				$options = array();
 			}
 
 			echo self::toHtml($var, $options, $dumpHash);
@@ -419,18 +421,17 @@ class TimeDebug {
 	}
 
 
-	private static function updateVar(&$var = NULL, array &$changes = NULL, $hash = '') {
-		if (!$hash) $hash = md5(self::$idPrefix);
+	private static function updateVar(&$var = NULL, array &$changes = NULL) {
 		$retText = '';
 
 		for ($i = 0, $j = count($changes); $i < $j; ++$i) {
 			$change = &self::$request[$changes[$i]];
 			$change['resId'] = 'tdChRes_' . ++self::$varCounter;
+			$path = $change['type'] % 2 . '§' . $change['path'];
 			try {
-				$applied = self::applyChange($var, $change['varPath'], $change['value'], $change['resId'], $change['type'], $hash);
+				$applied = self::applyChange($var, $change['varPath'], $change['value'], $change['resId'], $change['type'], $path);
 				$change['res'] = $applied[0];
-				$change['oriVar'] = '<span id="t' . self::$idPrefix . '_' . self::incCounter()
-						. '" class="nd-title" data-tt="1"><strong class="nd-inner"><pre class="nd">' . $applied[1] . '</pre></strong></span>';
+				$change['oriVar'] = self::createTitle('<pre class="nd">' . $applied[1] . '</pre>', $path);
 				$retText .= $applied[2];
 			} catch(Exception $e) {
 				$retText .= '<pre id="' . $change['resId'] . '" class="nd-result nd-error"><div class="nd-rollover"><div class="nd-indenter">'
@@ -446,7 +447,7 @@ class TimeDebug {
 	}
 
 
-	private static function applyChange(&$var = NULL, $varPath = array(), &$value = NULL, &$name = NULL, &$type = 0, &$hash = '') {
+	private static function applyChange(&$var = NULL, $varPath = array(), &$value = NULL, &$name = NULL, &$type = 0, &$path = '') {
 		if (empty($varPath) || !is_array($varPath)) throw new Exception('Neni nastavena neprazdna cesta typu pole (nalezen typ '
 				. gettype($varPath) . ') pro zmenu v promenne typu ' . gettype($var), 7);
 
@@ -514,7 +515,7 @@ class TimeDebug {
 				$retText .= ' Ponechana puvodni identicka hodnota ' . json_encode($var) . ' (' . gettype($var) . '). ';
 			}
 
-			$retVal[1] = self::dumpSmallVar($oriVar, array(self::TITLE_TYPE => 1, self::DUMP_ID => TRUE));
+			$retVal[1] = self::dumpSmallVar($oriVar, array(self::DUMP_ID => TRUE, self::TITLE_PATH => $path));
 			$retVal[2] = $retText . '</div></div></pre>';
 		} elseif ($step === 2 || $step === 4 || $step === 6) {
 			if (!is_array($var)) throw new Exception('Promenna typu ' . gettype($var) . ', ocekavano pole.', 9);
@@ -525,13 +526,13 @@ class TimeDebug {
 				unset($var[$index]);
 				if (!isset($var[$index])) {
 					$retVal[0] = 1;
-					$retVal[1] = self::dumpSmallVar($oriVar[$index], array(self::TITLE_TYPE => 1, self::DUMP_ID => TRUE));
+					$retVal[1] = self::dumpSmallVar($oriVar[$index], array(self::DUMP_ID => TRUE, self::TITLE_PATH => $path));
 					$retVal[2] = '<pre' . ( $name ? ' id="' . $name . '"' : '') . ' class="nd-result nd-unseted"><div class="nd-rollover">'
 							. '<div class="nd-indenter"> Odstranen prvek z pole s indexem "' . $index . '" s hodnotou ' . json_encode($oriVar[$index])
 							. ' (' . gettype($oriVar[$index]) . '). </div></div></pre>';
 				} else throw new Exception('Nepovedlo se odebrani prvku z pole na indexu "' . $varPath[0]['key'] . '".', 9);
 			} else {
-				$retVal = self::applyChange($var[$index], array_slice($varPath, 1), $value, $name, $type, $hash);
+				$retVal = self::applyChange($var[$index], array_slice($varPath, 1), $value, $name, $type, $path);
 			}
 		} elseif ($step === 1 || $step === 3 || $step === 5) {
 			if (!is_object($var)) throw new Exception('Promenna typu ' . gettype($var) . ', ocekavan objekt.', 9);
@@ -546,7 +547,7 @@ class TimeDebug {
 				if (!isset($varArray, $property)) {
 					throw new Exception('Objekt tridy "' . $objClass . '" nema dostupnou property: ' . $property . '.', 9);
 				}
-				$retVal = self::applyChange($varArray[$property], array_slice($varPath, 1), $value, $name, $type, $hash);
+				$retVal = self::applyChange($varArray[$property], array_slice($varPath, 1), $value, $name, $type, $path);
 				if ($priv === 2) {
 					$refObj = new ReflectionObject($var);
 					$refProp = $refObj->getProperty($property);
@@ -557,7 +558,7 @@ class TimeDebug {
 				if (!property_exists($var, $property)) {
 					throw new Exception('Objekt tridy "' . $objClass . '" nema dostupnou property: ' . $property . '.', 9);
 				}
-				$retVal = self::applyChange($var->$property, array_slice($varPath, 1), $value, $name, $type, $hash);
+				$retVal = self::applyChange($var->$property, array_slice($varPath, 1), $value, $name, $type, $path);
 			}
 		} else throw new Exception('Byl zadan spatny typ cesty pro zmenu v promenne "' . $step . '", ocekavano cislo 0 az 9.', 8);
 		return $retVal;
@@ -645,7 +646,8 @@ class TimeDebug {
 					self::COLLAPSE => FALSE,
 					self::COLLAPSE_COUNT => 7,
 					self::NO_BREAK => FALSE,
-					self::APP_RECURSION => is_object($var) && (get_class($var) !== self::$recClass)
+					self::APP_RECURSION => is_object($var) && (get_class($var) !== self::$recClass),
+					self::TITLE_PATH => ''
 				)) . "</pre>";
 	}
 
@@ -689,18 +691,18 @@ class TimeDebug {
 					if (!empty($backtrace[$id]['args'])) {
 						for ($i = 0, $j = count($backtrace[$id]['args']); $i < $j; ++$i) {
 							$arg = $backtrace[$id]['args'][$i];
+							$path = '2§H@$H§' . $i;
 							if(self::$advancedLog && is_array($arg) && $cnt = count($arg)) {
-								$args[] = '<span class="nd-array nd-titled"><span id="t' . self::$idPrefix . '_' . self::incCounter()
-										. '" class="nd-title" data-pk="' . $i . '" data-tt="2"><strong class="nd-inner"><pre class="nd">'
-										. self::dumpSmallVar($arg, array(self::TITLE_TYPE => 2)) . '</pre></strong></span>array</span> (' . $cnt . ')';
+								$args[] = '<span class="nd-array nd-titled">'
+										. self::createTitle('<pre class="nd">' . self::dumpSmallVar($arg, array(self::TITLE_PATH => $path))
+												. '</pre>', $path) . 'array</span> (' . $cnt . ')';
 							} else {
 								$args[] = self::dumpVar($arg, array(
 									self::APP_RECURSION => FALSE,
 									self::DEPTH => -1,
 									self::TRUNCATE => 10,
 									self::NO_BREAK => TRUE,
-									self::TITLE_TYPE => 2,
-									self::TITLE_KEY => $i
+									self::TITLE_PATH => $path
 								));
 							}
 						}
@@ -756,33 +758,48 @@ class TimeDebug {
 
 
 	private static function dumpString(&$var, $options, $level) {
+		$retTitle = '';
+		$retClass = '';
+
 		if ($options[self::TRUNCATE] && ($varLen = strlen($var)) > $options[self::TRUNCATE]) {
 			if (!isset($options[self::PARENT_KEY])) $arrKey = FALSE;
-			elseif ($options[self::PARENT_KEY][0] === '#') $arrKey = substr($options[self::PARENT_KEY], 1);
-			else $arrKey = $options[self::PARENT_KEY];
+			elseif ($options[self::PARENT_KEY][0] === '#') $arrKey = '7' . substr($options[self::PARENT_KEY], 1);
+			else $arrKey = '8' . $options[self::PARENT_KEY];
 
 			$retVal = '"' . self::encodeString(substr($var, 0, min($options[self::TRUNCATE], 512)), TRUE)
 					. '&hellip;"</span> (' . $varLen . ')';
 
-			if ($arrKey === FALSE) $data = isset($options[self::TITLE_KEY]) ? ' data-pk="' . $options[self::TITLE_KEY] . '"' : '';
-			else $data = ' data-pk="' . $arrKey . '"';
-			$retTitle = self::$advancedLog ? '<span id="t' . self::$idPrefix . '_' . self::incCounter()
-					. '" class="nd-title nd-color"' . $data . ' data-tt="' . (isset($options[self::TITLE_TYPE]) ? $options[self::TITLE_TYPE] : 3)
-					. '"><strong class="nd-inner"><i>' . str_replace(array('\\r', '\\n', '\\t'), array('<b>\\r</b>', '<b>\\n</b></i><i>', '<b>\\t</b>'),
-						self::encodeString(substr($var, 0, max($options[self::TRUNCATE], 1024)), TRUE))
-					. ($varLen > 1024 ? '&hellip; &lt; TRUNCATED to 1kB &gt;' : '') . '</i></strong></span>' : '';
+			if ($options[self::TRUNCATE] && ($varLen = strlen($var)) > $options[self::TRUNCATE]) {
+				$retVal = '"' . self::encodeString(substr($var, 0, min($options[self::TRUNCATE], 512)), TRUE)
+						. '&hellip;"</span> (' . $varLen . ')';
 
-			$retClass = self::$advancedLog ? ' nd-titled' : '';
+				if (self::$advancedLog) {
+					if (empty($options[self::TITLE_PATH])) $path = '';
+					else $path = $options[self::TITLE_PATH] . '§' . ($arrKey ?: '9string');
+
+					$retTitle = self::createTitle('<i>'
+							. str_replace(
+								array('\\r', '\\n', '\\t'),
+								array('<b>\\r</b>', '<b>\\n</b></i><i>', '<b>\\t</b>'),
+								self::encodeString(substr($var, 0, max($options[self::TRUNCATE], 1024)), TRUE)
+							) . ($varLen > 1024 ? '&hellip; &lt; TRUNCATED to 1kB &gt;' : '') . '</i>', $path);
+					$retClass = ' nd-titled';
+				}
+			}
 		} else {
-			$retTitle = '';
 			$retVal = self::encodeString($var) . '</span>';
-			$retClass = '';
 		}
 
 		$retVal = str_replace(array('\\r', '\\n', '\\t'), array('<b>\\r</b>', '<b>\\n</b>', '<b>\\t</b>'), $retVal);
 
 		return '<span class="nd-string' . $retClass . (($level || empty($options[self::DUMP_ID])) ? '' : ' nd-top') . '">'
 				. $retTitle . $retVal . ($options[self::NO_BREAK] ? '' : "\n");
+	}
+
+
+	private static function createTitle($html, $id = '') {
+		return '<span id="' . ($id ? md5($id) : 't' . self::$idPrefix . '_' . self::incCounter())
+				. '" class="nd-title"><strong class="nd-inner">' . $html . '</strong></span>';
 	}
 
 
@@ -812,9 +829,12 @@ class TimeDebug {
 
 		} elseif (!$options[self::DEPTH] || $level < $options[self::DEPTH]) {
 			$collapsed = $level ? count($var) >= $options[self::COLLAPSE_COUNT] : $options[self::COLLAPSE];
+			if (self::$advancedLog) $key = $parentKey ?: (!$level ? "2" : '');
+			else $key = '';
+			if ($key && !empty($options[self::TITLE_PATH])) $options[self::TITLE_PATH] .= '§' . $key;
+
 			$out = '<span class="nd-toggle nette-toggle' . ($collapsed ? '-collapsed">' : '">') . $out . count($var)
-					. ")</span>\n<div" . ($collapsed ? ' class="nette-collapsed"' : '')
-					. (self::$advancedLog && $parentKey ? " data-pk=\"$parentKey\">" : (!$level ? " data-pk=\"2\">" : '>'));
+					. ")</span>\n<div" . ($collapsed ? ' class="nette-collapsed"' : '') . ($key ? " data-pk=\"$key\">" : '>');
 			$var[$marker] = TRUE;
 			foreach ($var as $k => &$v) {
 				if ($k !== $marker) {
@@ -852,9 +872,12 @@ class TimeDebug {
 
 		} elseif (!$options[self::DEPTH] || $level < $options[self::DEPTH]) {
 			$collapsed = $level ? count($fields) >= $options[self::COLLAPSE_COUNT] : $options[self::COLLAPSE];
+			if (self::$advancedLog) $key = $parentKey ?: (!$level ? "1$varClass" : '');
+			else $key = '';
+			if ($key && !empty($options[self::TITLE_PATH])) $options[self::TITLE_PATH] .= '§' . $key;
+
 			$out = '<span class="nd-toggle nette-toggle' . ($collapsed ? '-collapsed">' : '">') . $out . "</span>\n<div"
-					. ($collapsed ? ' class="nette-collapsed"' : '')
-					. (self::$advancedLog && $parentKey ? " data-pk=\"$parentKey\">" : (!$level ? " data-pk=\"1$varClass\">" : '>'));
+					. ($collapsed ? ' class="nette-collapsed"' : '') . ($key ? " data-pk=\"$key\">" : '>');
 			$list[] = $var;
 			foreach ($fields as $k => &$v) {
 				$vis = '';
