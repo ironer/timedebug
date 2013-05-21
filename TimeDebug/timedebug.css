@@ -293,6 +293,9 @@ pre.nd-location {
 	letter-spacing: 1px;
 	overflow: hidden;
 }
+.nd-time {
+	margin-right: 7px;
+}
 .nd-res:after {
 	display: inline-block;
 	height: 16px;
@@ -300,6 +303,7 @@ pre.nd-location {
 	text-align: center;
 	font-size: 10px;
 	padding-left: 1px;
+	margin-right: -7px;
 	color: #fff;
 	background: #a00;
 	content: " ";
@@ -378,6 +382,7 @@ pre.nd-location {
 	color: #00e;
 }
 .nd-unset {
+	font-family: Courier, monospace;
 	color: #a00;
 }
 .nd-control a {

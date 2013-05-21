@@ -5,7 +5,6 @@
  * used sources: Seznam's JAK library (http://seznam.cz)
  */
 
-// TODO: nd-unset jinym fontem
 // TODO: ulozit nastaveni do localstorage a/nebo vyexportovat do konzole
 // TODO: nacist nastaveni z localstorage a/nebo z konzole
 
@@ -531,7 +530,7 @@ td.updateChangeList = function(el) {
 			continue;
 		}
 
-		change.innerHTML = '<span' + (typeof change.data.res !== 'undefined' ? ' class="nd-res nd-restype' + change.data.res + '">' : '>')
+		change.innerHTML = '<span class="nd-time' + (typeof change.data.res !== 'undefined' ? ' nd-res nd-restype' + change.data.res + '">' : '">')
 				+ '[' + change.runtime + ']</span> ' + td.printPath(change) + (change.data.type !== 2 ? ' <span class="nd-'
 				+ (change.valid ? 'valid' : 'invalid') +'-json' + (change.formated ? ' nd-formated' : '') + '">'
 				+ JSON.stringify(change.data.value) + '</span>' : '');
