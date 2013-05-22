@@ -69,7 +69,7 @@ td.changes = [];
 td.results = [];
 td.fullResults = [];
 td.tdChangeList = JAK.mel('div', {'id': 'tdChangeList'});
-td.deleteChange = JAK.mel('div', {'id': 'tdDeleteChange', 'innerHTML': 'X', 'title': ' ', 'showLogRow': true});
+td.deleteChange = JAK.mel('div', {'id': 'tdDeleteChange', 'innerHTML': 'X', 'showLogRow': true});
 td.hoveredChange = null;
 td.noContainerChangeIndex = 65535;
 
@@ -183,7 +183,7 @@ td.init = function(logId) {
 			+ '</strong></span>napoveda</span>'
 			+ '     |&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span>export</span>'
 			+ '&nbsp;&nbsp;&nbsp;&nbsp;<span>import</span>'
-			+ '     |&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span>ulozit</span>'
+			+ '     |&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span id="tdMenuSave">ulozit</span>'
 			+ '&nbsp;&nbsp;&nbsp;&nbsp;<span>nahrat</span>'
 			+ '&nbsp;&nbsp;&nbsp;&nbsp;<span>smazat</span>'
 			+ '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div><hr>'
@@ -197,6 +197,7 @@ td.init = function(logId) {
 	td.controlSpaceX = td.control.clientWidth + JAK.DOM.scrollbarWidth();
 	td.control.controlTitle.appendChild(td.tdChangeList);
 	if (td.local) JAK.Events.addListener(JAK.gel('tdMenuSend'), 'mousedown', td, td.sendChanges);
+	JAK.Events.addListener(JAK.gel('tdMenuSave'), 'mousedown', td, td.saveState);
 
 	JAK.Events.addListener(JAK.gel('tdMenuRestore'), 'mousedown', td, td.reloadPage);
 	td.showDump(logId);
@@ -493,9 +494,9 @@ td.printPath = function(change) {
 	if (k === 9) retVal += '<i>(' + retKey + ')</i>';
 	else retVal += !close || key == parseInt(key) ? retKey + close : "'" + retKey + "'" + close;
 
-	if (change.data.type % 2) retVal += change.valid && typeof change.data.value === 'object' ? ' +=' : '[] =';
+	if (change.data.type % 2) retVal += change.valid && typeof change.data.value === 'object' ? ' += ' : '[] = ';
 	else if (change.data.type) retVal += ' <b class="nd-unset">(un$et)</b>';
-	else retVal += ' =';
+	else retVal += ' = ';
 
 	return retVal;
 };
@@ -507,10 +508,8 @@ td.updateChangeList = function(el) {
 
 	td.changes.sort(function(b,a) {
 		return (parseFloat(a.runtime) - parseFloat(b.runtime)) ||
-				(a.sortVals.parentPrefix !== b.sortVals.parentPrefix ? a.sortVals.parentPrefix > b.sortVals.parentPrefix :
-						(a.sortVals.parentIndex !== b.sortVals.parentIndex ? a.sortVals.parentIndex > b.sortVals.parentIndex :
-								a.sortVals.changeIndex > b.sortVals.changeIndex)
-				);
+			(a.index.parentPrefix !== b.index.parentPrefix ? a.index.parentPrefix > b.index.parentPrefix :
+				(a.index.parentIndex - b.index.parentIndex || a.index.changeIndex - b.index.changeIndex));
 	});
 
 	while (i-- > 0) {
@@ -531,9 +530,15 @@ td.updateChangeList = function(el) {
 		}
 
 		change.innerHTML = '<span class="nd-time' + (typeof change.data.res !== 'undefined' ? ' nd-res nd-restype' + change.data.res + '">' : '">')
-				+ '[' + change.runtime + ']</span> ' + td.printPath(change) + (change.data.type !== 2 ? ' <span class="nd-'
-				+ (change.valid ? 'valid' : 'invalid') +'-json' + (change.formated ? ' nd-formated' : '') + '">'
-				+ JSON.stringify(change.data.value) + '</span>' : '');
+				+ '[' + change.runtime + ']</span> ' + td.printPath(change);
+
+		if (change.data.type !== 2) {
+			change.appendChild(JAK.mel('span', {
+				className: (change.valid ? 'nd-valid-json' : 'nd-invalid-json') + (change.formated ? ' nd-formated' : ''),
+				title: change.varEl ? change.varEl.title : td.formatJson(change.data.value),
+				innerHTML: JSON.stringify(change.data.value)
+			}));
+		}
 
 		if (change.data.oriVar) { change.appendChild(change.data.oriVar); change.style.paddingRight = '16px'; }
 		else change.removeAttribute('style');
@@ -542,9 +547,6 @@ td.updateChangeList = function(el) {
 			change.id = 'tdLastChange';
 			change.lastChange = false;
 		} else if (el) change.removeAttribute('id');
-
-		if (change.data.type === 2) change.title = '';
-		else change.title = change.varEl ? change.varEl.title : td.formatJson(change.data.value);
 
 		td.tdChangeList.appendChild(change);
 	}
@@ -849,11 +851,11 @@ td.createChange = function(data, container, varEl, logRow) {
 			for (i = 0, j = changeEls.length, k = 0; i < j; ++i) {
 				if (change.logRow.changedVarEls.indexOf(changeEls[i]) !== -1) {
 					changeEls[i].parentPrefix = key[0];
-					changeEls[i].parentIndex = key[1];
+					changeEls[i].parentIndex = ~~key[1];
 					changeEls[i].changeIndex = k++;
 				}
 			}
-			change.sortVals = change.varEl;
+			change.index = change.varEl;
 		}
 	} else if (container) {
 		change.runtime = container.runtime;
@@ -864,10 +866,10 @@ td.createChange = function(data, container, varEl, logRow) {
 			changeEls = JAK.DOM.getElementsByClass('nd-var-change', container);
 			for (i = 0, j = changeEls.length; i < j; ++i) {
 				changeEls[i].parentPrefix = key[0];
-				changeEls[i].parentIndex = key[1];
+				changeEls[i].parentIndex = ~~key[1];
 				changeEls[i].changeIndex = i;
 			}
-			change.sortVals = change.varEl;
+			change.index = change.varEl;
 		}
 	} else change.runtime = ' N/A ';
 
@@ -875,10 +877,10 @@ td.createChange = function(data, container, varEl, logRow) {
 		varEl.change = change;
 		change.listeners.push(JAK.Events.addListener(varEl, 'mouseover', varEl, td.hoverChange));
 		change.listeners.push(JAK.Events.addListener(varEl, 'mouseout', varEl, td.unhoverChange));
-	} else change.sortVals = {
+	} else change.index = {
 		'parentPrefix': key[0] || 'zzzzz',
-		'parentIndex': key[1] || 65535,
-		'changeIndex': data.resId ? 32767 + data.resId.split('_').reverse()[0] : ++td.noContainerChangeIndex
+		'parentIndex': ~~key[1] || 65535,
+		'changeIndex': data.resId === null ? ++td.noContainerChangeIndex : 32767 + ~~data.resId.split('_').reverse()[0]
 	};
 
 	if (data.resId) {
@@ -905,8 +907,8 @@ td.duplicateNode = function(varEl) {
 };
 
 td.checkDeleteChange = function() {
-	if (td.deleteChange.showLogRow === true) td.deleteChange.style.textDecoration = 'underline';
-	else td.deleteChange.removeAttribute('style');
+	if (td.deleteChange.showLogRow === true) JAK.DOM.addClass(td.deleteChange, 'nd-underline');
+	else JAK.DOM.removeClass(td.deleteChange, 'nd-underline');
 	return td.deleteChange;
 };
 
@@ -1862,7 +1864,7 @@ td.setChangesData = function(changesData) {
 };
 
 td.createOriVar = function(oriVar, changed) {
-	var el = JAK.mel('div', {'className': 'nd-titled nd-ori-var' + (changed ? ' nd-changed' : ''), 'title': ' '});
+	var el = JAK.mel('div', {'className': 'nd-titled nd-ori-var' + (changed ? ' nd-changed' : '')});
 	el.innerHTML = oriVar + '$';
 	return el;
 };
@@ -2199,4 +2201,16 @@ td.areaWrite = function(el, text, start, end) {
 	el.selectionStart = start;
 	el.selectionEnd = end;
 	el.scrollTop = top;
+};
+
+td.saveState = function(name) {
+	name = td.newSaveName();//name ||
+	localStorage[name] = '';
+	console.debug(name);
+};
+
+td.newSaveName = function(name) {
+	var i = '', key = '[' + (new Date()).format('y-m-d H:i') + '] ' + (name || 'TimeDebug');
+	while (typeof localStorage[key + i] !== 'undefined') i = ' ' + (~~i + 1);
+	return key + i;
 };

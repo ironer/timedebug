@@ -372,6 +372,9 @@ pre.nd-location {
 	background: linear-gradient(to right, rgba(255,255,238,1) 0%,rgba(255,255,238,1) 50%,rgba(255,255,238,0) 100%);
 	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ffffee', endColorstr='#00ffffee', GradientType=1);
 }
+.nd-underline {
+	text-decoration: underline;
+}
 .nd-reflection {
 	color: #c00;
 }

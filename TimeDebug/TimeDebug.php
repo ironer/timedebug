@@ -528,7 +528,7 @@ class TimeDebug {
 					$retVal[0] = 1;
 					$retVal[1] = self::dumpSmallVar($oriVar[$index], array(self::DUMP_ID => TRUE, self::TITLE_PATH => $path));
 					$retVal[2] = '<pre' . ( $name ? ' id="' . $name . '"' : '') . ' class="nd-result nd-unseted"><div class="nd-rollover">'
-							. '<div class="nd-indenter"> Odstranen prvek z pole s indexem "' . $index . '" s hodnotou ' . json_encode($oriVar[$index])
+							. '<div class="nd-indenter"> Odstranen prvek z pole s indexem "' . $index . '" a hodnotou ' . json_encode($oriVar[$index])
 							. ' (' . gettype($oriVar[$index]) . '). </div></div></pre>';
 				} else throw new Exception('Nepovedlo se odebrani prvku z pole na indexu "' . $varPath[0]['key'] . '".', 9);
 			} else {
