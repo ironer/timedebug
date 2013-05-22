@@ -1915,6 +1915,7 @@ td.getTdData = function(allData) {
 	};
 
 	if (allData) {
+		tdData.url = window.location.protocol + '//' + window.location.host + window.location.pathname;
 		tdData.get = td.get;
 		tdData.post = td.post;
 		tdData.oldRequest = JSON.parse(td.oldRequest);
@@ -2204,13 +2205,17 @@ td.areaWrite = function(el, text, start, end) {
 };
 
 td.saveState = function(name) {
-	name = td.newSaveName();//name ||
-	localStorage[name] = '';
-	console.debug(name);
+	var changes = td.getChangesData(), config = td.getTdData(true), titles = td.getTitlesData();
+	var flags = (config.get ? 'G' : ' ') + (config.post.length ? 'P' : ' ') + (config.oldRequest.length ? 'C' : ' ');
+
+	name = td.newSaveName(flags, config.url.match(/^https?:\/\/(.*?)\/?$/)[1]);//name ||
+
+	localStorage[name] = b62s.base8To32k(b62s.compress(JSON.stringify({'changes': changes, 'config': config, 'titles': titles})));;
+	return name;
 };
 
-td.newSaveName = function(name) {
-	var i = '', key = '[' + (new Date()).format('y-m-d H:i') + '] ' + (name || 'TimeDebug');
+td.newSaveName = function(flags, name) {
+	var i = '', key = 'td [' + (new Date()).format('y-m-d H:i') + '] (' + (flags || '   ') + ')  ' + (name || 'TimeDebug');
 	while (typeof localStorage[key + i] !== 'undefined') i = ' ' + (~~i + 1);
 	return key + i;
 };
