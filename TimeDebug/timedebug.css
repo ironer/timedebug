@@ -434,8 +434,23 @@ pre.nd-location {
 	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#0099ff33', endColorstr='#99ff33', GradientType=1);
 	border-radius: 0;
 }
+#saveTitle .nd-inner {
+	padding: 0;
+}
+#saveTitle pre {
+	padding: 0 8px;
+}
 .nd-ori-var .nd-title {
 	text-align: left;
+}
+.nd-save, .nd-nosave {
+	margin: 0;
+}
+.nd-save:hover {
+	background: #fc8;
+}
+.nd-flags {
+	color: #009;
 }
 #tdNoTitles, #tdTitleMask {
 	position: absolute;

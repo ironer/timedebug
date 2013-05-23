@@ -34,9 +34,9 @@ td.oldRequest = '';
 td.allowClick = true;
 td.clickTimeout = null;
 
-td.tdContainer = JAK.mel('div', {id: 'tdContainer'});
-td.tdOuterWrapper = JAK.mel('div', {id: 'tdOuterWrapper'});
-td.tdInnerWrapper = JAK.mel('div', {id: 'tdInnerWrapper'});
+td.tdContainer = JAK.mel('div', {'id': 'tdContainer'});
+td.tdOuterWrapper = JAK.mel('div', {'id': 'tdOuterWrapper'});
+td.tdInnerWrapper = JAK.mel('div', {'id': 'tdInnerWrapper'});
 td.tdView = JAK.mel('pre', {id: 'tdView'});
 td.tdFullWidth = false;
 td.tdWidth = 400;
@@ -175,23 +175,25 @@ td.init = function(logId) {
 	document.body.insertBefore(td.tdContainer, document.body.childNodes[0]);
 
 	td.control.innerHTML = '<span class="nd-titled"><span id="controlTitle" class="nd-title"><strong class="nd-inner">'
-			+ '<hr><div class="nd-menu">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'
-			+ (td.local ? '<span id="tdMenuSend"><b>odeslat</b></span>&nbsp;&nbsp;&nbsp;&nbsp;' : '')
-			+ '<span id="tdMenuRestore">obnovit</span>&nbsp;&nbsp;&nbsp;&nbsp;'
-			+ '<span class="nd-titled"><span id="helpTitle" class="nd-title"><strong class="nd-inner">'
-			+ td.help
-			+ '</strong></span>napoveda</span>'
-			+ '     |&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span>export</span>'
-			+ '&nbsp;&nbsp;&nbsp;&nbsp;<span>import</span>'
-			+ '     |&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span id="tdMenuSave">ulozit</span>'
-			+ '&nbsp;&nbsp;&nbsp;&nbsp;<span>nahrat</span>'
-			+ '&nbsp;&nbsp;&nbsp;&nbsp;<span>smazat</span>'
-			+ '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div><hr>'
-			+ '</strong></span>*</span>';
+		+ '<hr><div class="nd-menu">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'
+		+ (td.local ? '<span id="tdMenuSend"><b>odeslat</b></span>&nbsp;&nbsp;&nbsp;&nbsp;' : '')
+		+ '<span id="tdMenuRestore">obnovit</span>&nbsp;&nbsp;&nbsp;&nbsp;'
+		+ '<span class="nd-titled"><span id="helpTitle" class="nd-title"><strong class="nd-inner">'
+		+ td.help
+		+ '</strong></span>napoveda</span>'
+		+ '     |&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span id="tdMenuSave">ulozit</span>'
+		+ '&nbsp;&nbsp;&nbsp;&nbsp;<span class="nd-titled"><span id="saveTitle" class="nd-title"></span>nahrat</span>'
+		+ '     |&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span>export</span>'
+		+ '&nbsp;&nbsp;&nbsp;&nbsp;<span>import</span>'
+		+ '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div><hr>'
+		+ '</strong></span>*</span>';
 
 	document.body.appendChild(td.control);
 	td.control.controlTitle = JAK.gel('controlTitle');
 	td.control.helpTitle = JAK.gel('helpTitle');
+	td.control.saveTitle = JAK.gel('saveTitle');
+	td.loadSavesInner();
+	JAK.Events.addListener(td.control.saveTitle, 'mousedown', td, td.saveAction);
 
 	JAK.Events.addListener(td.control, 'mousedown', td, td.logAction);
 	td.controlSpaceX = td.control.clientWidth + JAK.DOM.scrollbarWidth();
@@ -266,8 +268,7 @@ td.noRightClickSelection = function(e) {
 td.changeVar = function(e) {
 	if (!td.local || e.shiftKey || e.ctrlKey || e.metaKey || e.button !== JAK.Browser.mouse.right) return true;
 
-	var tar = JAK.Events.getTarget(e);
-	if (tar.tagName.toLowerCase() === 'b') tar = tar.parentNode;
+	var tar = td.getTargetElement(e);
 
 	td.tdStop(e);
 
@@ -317,7 +318,7 @@ td.changeAction = function(e, el) {
 		return true;
 	}
 
-	var hashes = [], tar = JAK.Events.getTarget(e);
+	var hashes = [], tar = td.getTargetElement(e);
 
 	if (e.button === JAK.Browser.mouse.right) {
 		td.tdStop(e);
@@ -506,7 +507,7 @@ td.updateChangeList = function(el) {
 	var i = td.changes.length, j;
 	if (el) el.lastChange = true;
 
-	td.changes.sort(function(b,a) {
+	td.changes.sort(function(b, a) {
 		return (parseFloat(a.runtime) - parseFloat(b.runtime)) ||
 			(a.index.parentPrefix !== b.index.parentPrefix ? a.index.parentPrefix > b.index.parentPrefix :
 				(a.index.parentIndex - b.index.parentIndex || a.index.changeIndex - b.index.changeIndex));
@@ -534,9 +535,9 @@ td.updateChangeList = function(el) {
 
 		if (change.data.type !== 2) {
 			change.appendChild(JAK.mel('span', {
-				className: (change.valid ? 'nd-valid-json' : 'nd-invalid-json') + (change.formated ? ' nd-formated' : ''),
-				title: change.varEl ? change.varEl.title : td.formatJson(change.data.value),
-				innerHTML: JSON.stringify(change.data.value)
+				'className': (change.valid ? 'nd-valid-json' : 'nd-invalid-json') + (change.formated ? ' nd-formated' : ''),
+				'title': change.varEl ? change.varEl.title : td.formatJson(change.data.value),
+				'innerHTML': JSON.stringify(change.data.value)
 			}));
 		}
 
@@ -999,13 +1000,14 @@ td.consoleOpen = function(el, callback) {
 	td.tdConsole.mask = JAK.mel('div', {'id':'tdConsoleMask'});
 
 	var attribs = {id:'tdConsoleArea'};
-  if (el.title) {
-	  attribs.value = td.tdConsole.mask.title = el.title;
-	  el.title = null;
-  }
+	if (el.areaValue) attribs.value = el.areaValue;
+	else if (el.title) {
+		attribs.value = td.tdConsole.mask.title = el.title;
+		el.title = null;
+	}
 
-	td.tdConsole.area = JAK.mel('textarea', attribs, {'width':td.consoleConfig.x + 'px',
-		'height':td.consoleConfig.y + 'px'});
+	td.tdConsole.area = JAK.mel('textarea', attribs, {'width': td.consoleConfig.x + 'px',
+		'height': td.consoleConfig.y + 'px'});
 	td.tdConsole.appendChild(td.tdConsole.mask);
 	td.tdConsole.appendChild(td.tdConsole.area);
 	td.tdConsole.varEl = el;
@@ -1020,10 +1022,11 @@ td.consoleOpen = function(el, callback) {
 	td.tdConsole.callback = callback || td.tdStop;
 	td.textareaTimeout = window.setTimeout(td.textareaFocus, 1);
 
-	JAK.DOM.addClass(el, 'nd-edited');
 	if (el.change) {
 		JAK.DOM.addClass(el.change, 'nd-edited');
 		if (el.change.resEl) JAK.DOM.addClass(el.change.resEl, 'nd-edited');
+	} else if (!el.areaValue) {
+		JAK.DOM.addClass(el, 'nd-edited');
 	}
 };
 
@@ -1348,7 +1351,7 @@ td.keepMaxZIndex = function(el) {
 	el.style.zIndex = ++td.zIndexMax;
 
 	if (td.zIndexMax > td.visibleTitles.length + 1000) {
-		td.visibleTitles.sort(function(a,b) { return parseInt(a.style.zIndex) - parseInt(b.style.zIndex); });
+		td.visibleTitles.sort(function(a, b) { return parseInt(a.style.zIndex) - parseInt(b.style.zIndex); });
 		for (i = 0, j = td.visibleTitles.length; i < j;) td.visibleTitles[i].style.zIndex = ++i + 100;
 		td.zIndexMax = j + 100;
 	}
@@ -1359,7 +1362,7 @@ td.hoverTitle = function(e) {
 	e = e || window.event;
 	if (td.hide[0] === 2 || td.actionData.element !== null) return true;
 
-	var tar = JAK.Events.getTarget(e);
+	var tar = td.getTargetElement(e);
 
 	if (parseInt(this.style.zIndex) === td.zIndexMax || JAK.DOM.hasClass(tar, 'nd-titled') || td.titleHideTimeout !== null) return true;
 
@@ -1562,8 +1565,7 @@ td.pinTitle = function(e) {
 		td.titleHideTimeout = null;
 	}
 
-	var tar = JAK.Events.getTarget(e);
-	if (tar.tagName.toLowerCase() === 'b') tar = tar.parentNode;
+	var tar = td.getTargetElement(e);
 
 	if (!JAK.DOM.hasClass(tar, 'nd-titled')) return false;
 
@@ -2210,12 +2212,71 @@ td.saveState = function(name) {
 
 	name = td.newSaveName(flags, config.url.match(/^https?:\/\/(.*?)\/?$/)[1]);//name ||
 
-	localStorage[name] = b62s.base8To32k(b62s.compress(JSON.stringify({'changes': changes, 'config': config, 'titles': titles})));;
-	return name;
+	localStorage[name] = b62s.base8To32k(b62s.compress(JSON.stringify({'changes': changes, 'config': config, 'titles': titles})));
+
+	td.loadSavesInner();
 };
 
 td.newSaveName = function(flags, name) {
-	var i = '', key = 'td [' + (new Date()).format('y-m-d H:i') + '] (' + (flags || '   ') + ')  ' + (name || 'TimeDebug');
-	while (typeof localStorage[key + i] !== 'undefined') i = ' ' + (~~i + 1);
+	var i = '', key = 'td§[' + (new Date()).format('y-m-d H:i:s') + ']§' + (flags || '   ') + '§' + (name || 'TimeDebug');
+	while (typeof localStorage[key + i] !== 'undefined') i = ' ' + ((~~i || 1) + 1);
 	return key + i;
+};
+
+td.loadSavesInner = function() {
+	var i, saves = [], rec, inner = JAK.cel('strong', 'nd-inner'), rowData;
+	for (var record in localStorage) {
+		if (localStorage.hasOwnProperty(record) && record.slice(0, 4) === 'td§[') {
+			rec = record.slice(3).split('§');
+			rowData = {
+				'className': 'nd nd-save',
+				'record': record,
+				'prefixValue': 'td§' + rec[0] + '§' + rec[1] + '§',
+				'areaValue': rec[2],
+				'innerHTML': rec[0] + ' <b class="nd-flags">(' + rec[1] + ')</b> <b>' + td.htmlEncode(rec[2]) + '</b>'
+			};
+			saves.push(rowData);
+		}
+	}
+
+	if (!saves.length) inner.innerHTML = '<pre class="nd nd-nosave">No saves</pre>';
+	else {
+		saves.sort(function(a, b) { return a.record < b.record; });
+		for (i = saves.length; i-- > 0;) inner.appendChild(JAK.mel('pre', saves[i]));
+	}
+
+	JAK.DOM.clear(td.control.saveTitle);
+	td.control.saveTitle.appendChild(inner);
+};
+
+td.saveAction = function(e) {
+	if (td.tdConsole !== null || e.shiftKey || e.ctrlKey || e.metaKey) return true;
+	var tar = td.getTargetElement(e);
+	if (e.button === JAK.Browser.mouse.right) {
+		if (e.altKey) {
+			delete localStorage[tar.record];
+			td.loadSavesInner();
+		} else td.consoleOpen(tar, td.changeSaveName);
+	}
+	return true;
+};
+
+td.getTargetElement = function(e) {
+	var tar = JAK.Events.getTarget(e);
+	if (tar.tagName.toLowerCase() === 'b') tar = tar.parentNode;
+	return tar;
+};
+
+td.changeSaveName = function() {
+	var changedName, tar = td.tdConsole.varEl;
+	if (!(changedName = td.tdConsole.area.value.replace(/[\n\r]/g, ''))) return false;
+
+	td.consoleClose();
+	if (changedName === tar.areaValue) return true;
+
+	localStorage[tar.prefixValue + changedName] = localStorage[tar.record];
+	delete localStorage[tar.record];
+
+	td.loadSavesInner();
+	return true;
 };

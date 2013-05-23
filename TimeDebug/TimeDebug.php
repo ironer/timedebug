@@ -250,6 +250,12 @@ class TimeDebug {
 				'Alt + LC' => 'zmena velikosti oken',
 				'Shift + LC' => 'maximalizovany rezim'
 			),
+			'OVLADANI ULOZENYCH STAVU' => array(
+				'Left Click' => 'nahrat stav na ulozene adrese',
+				'Alt + LC' => 'nahrat stav na aktualni adrese',
+				'Right Click' => 'prejmenovat ulozeny stav',
+				'Alt + RC' => 'smazat ulozeny stav'
+			),
 			'OVLADANI MENU (pouze local)' => array(
 				'Shift + "odeslat"' => 'odeslat zmeny do noveho okna',
 				'Ctrl/Cmd + "odeslat"' => 'vynutit odeslani POSTem',
