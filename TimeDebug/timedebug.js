@@ -553,18 +553,14 @@ td.updateChangeList = function(el) {
 	}
 	td.changes.reverse();
 
-	el = td.tdChangeList.parentNode;
+	var title = td.control.controlTitle;
 
-	if (typeof el.menuWidth === 'undefined' && el.oriWidth) {
-		el.menuWidth = el.oriWidth;
-		el.menuHeight = el.oriHeight;
-	}
-	if (el.oriWidth && el.style.display !== 'none') {
-		el.style.width = 'auto';
-		el.oriWidth = Math.max(el.menuWidth, td.tdChangeList.clientWidth);
-		el.oriHeight = el.menuHeight + (el.changesHeight = td.tdChangeList.clientHeight);
-		td.titleAutosize(el);
-	}
+	if (title.style.display !== 'block') return false;
+
+	td.recalcControlSize();
+	td.titleAutosize(title);
+
+	return true;
 };
 
 td.parseJson = function(text) {
@@ -1025,9 +1021,7 @@ td.consoleOpen = function(el, callback) {
 	if (el.change) {
 		JAK.DOM.addClass(el.change, 'nd-edited');
 		if (el.change.resEl) JAK.DOM.addClass(el.change.resEl, 'nd-edited');
-	} else if (!el.areaValue) {
-		JAK.DOM.addClass(el, 'nd-edited');
-	}
+	} else if (!el.areaValue) JAK.DOM.addClass(el, 'nd-edited');
 };
 
 td.textareaFocus = function() {
@@ -1291,11 +1285,10 @@ td.displayTitle = function(title) {
 			td.tdChangeList.style.display = 'block';
 		}
 	}
-	if (title.id === 'controlTitle') {
-		title.style.width = 'auto';
-		title.oriWidth = Math.max(title.menuWidth, td.tdChangeList.clientWidth);
-		title.oriHeight = title.menuHeight + (title.changesHeight = td.tdChangeList.clientHeight);
-	}
+
+	if (title.id === 'controlTitle') td.recalcControlSize();
+	else if (title.id === 'saveTitle') td.recalcSaveSize();
+
 	if (tdParents = tdParents || title.parents) {
 		for (var k = tdParents.length; k-- > 0;) {
 			if (tdParents[k].hasOwnProperty('activeChilds')) {
@@ -1306,6 +1299,20 @@ td.displayTitle = function(title) {
 
 	td.visibleTitles.push(title);
 	return true;
+};
+
+td.recalcControlSize = function() {
+	var title = td.control.controlTitle;
+	title.style.width = title.style.height = 'auto';
+	title.oriWidth = Math.max(title.menuWidth, td.tdChangeList.clientWidth);
+	title.oriHeight = title.menuHeight + (title.changesHeight = td.tdChangeList.clientHeight);
+};
+
+td.recalcSaveSize = function() {
+	var title = td.control.saveTitle;
+	title.style.width = title.style.height = 'auto';
+	title.oriWidth = title.offsetWidth;
+	title.oriHeight = title.scrollHeight;
 };
 
 td.removeFromParents = function(el) {
@@ -2224,7 +2231,7 @@ td.newSaveName = function(flags, name) {
 };
 
 td.loadSavesInner = function() {
-	var i, saves = [], rec, inner = JAK.cel('strong', 'nd-inner'), rowData;
+	var i, saves = [], rec, inner = JAK.cel('strong', 'nd-inner'), rowData, title = td.control.saveTitle;
 	for (var record in localStorage) {
 		if (localStorage.hasOwnProperty(record) && record.slice(0, 4) === 'td§[') {
 			rec = record.slice(3).split('§');
@@ -2245,8 +2252,15 @@ td.loadSavesInner = function() {
 		for (i = saves.length; i-- > 0;) inner.appendChild(JAK.mel('pre', saves[i]));
 	}
 
-	JAK.DOM.clear(td.control.saveTitle);
-	td.control.saveTitle.appendChild(inner);
+	JAK.DOM.clear(title);
+	title.appendChild(inner);
+
+	if (title.style.display !== 'block') return false;
+
+	td.recalcSaveSize();
+	td.titleAutosize(title);
+
+	return true;
 };
 
 td.saveAction = function(e) {
