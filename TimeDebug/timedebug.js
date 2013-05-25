@@ -5,7 +5,6 @@
  * used sources: Seznam's JAK library (http://seznam.cz)
  */
 
-// TODO: zobrazit modifikovane zmeny po loadu
 // TODO: vyexportovat nastaveni do konzole
 // TODO: nacist nastaveni z konzole
 
@@ -547,9 +546,9 @@ td.updateChangeList = function(el) {
 		else change.removeAttribute('style');
 
 		if (change.lastChange) {
-			change.id = 'tdLastChange';
+			JAK.DOM.addClass(change, 'nd-lastchange');
 			change.lastChange = false;
-		} else if (el) change.removeAttribute('id');
+		} else if (el) JAK.DOM.removeClass(change, 'nd-lastchange');
 
 		td.tdChangeList.appendChild(change);
 	}
@@ -1847,14 +1846,18 @@ td.getChangesData = function(allData) {
 };
 
 td.updateChangesData = function(changesData) {
-	var i, j, change, loadChanges = [], keepChanges = [];
+	var i, j, change, loadChanges = [], keepChanges = [], oldChange;
 	for (i = 0, j = changesData.length; i < j; ++i) {
 		if (change = td.getSameChange(changesData[i])) {
+			oldChange = JSON.stringify([change.varEl ? change.varEl.title : '', change.data.type, change.data.value, change.valid, change.formated]);
 			if (change.varEl) change.varEl.title = changesData[i][4];
 			change.data.type = changesData[i][2];
 			change.data.value = change.data.type === 3 ? JSON.parse(changesData[i][1]) : changesData[i][1];
 			change.valid = changesData[i][5];
 			change.formated = changesData[i][6];
+			if (oldChange !== JSON.stringify(
+				[change.varEl ? change.varEl.title : '', change.data.type, change.data.value, change.valid, change.formated]
+			)) change.lastChange = true;
 			keepChanges.push(change);
 		} else {
 			loadChanges.push({

@@ -347,7 +347,7 @@ pre.nd-location {
 .nd-change:hover #tdDeleteChange {
 	display: block;
 }
-#tdLastChange {
+.nd-lastchange {
 	background: #fe9;
 }
 #tdDeleteChange {
