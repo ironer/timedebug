@@ -5,8 +5,9 @@
  * used sources: Seznam's JAK library (http://seznam.cz)
  */
 
-// TODO: ulozit nastaveni do localstorage a/nebo vyexportovat do konzole
-// TODO: nacist nastaveni z localstorage a/nebo z konzole
+// TODO: animace pro dokonceni title action
+// TODO: vyexportovat nastaveni do konzole
+// TODO: nacist nastaveni z konzole
 
 // TODO: ulozit serii testu v TimeDebugu
 // TODO: vyplivnout vystup do iframe nebo dalsiho okna
@@ -30,7 +31,7 @@ td.indexes = [];
 td.response = null;
 td.hash2Id = {};
 td.hash2LogId = {};
-td.oldRequest = '';
+td.oldRequest = '[]';
 td.allowClick = true;
 td.clickTimeout = null;
 
@@ -192,8 +193,9 @@ td.init = function(logId) {
 	td.control.controlTitle = JAK.gel('controlTitle');
 	td.control.helpTitle = JAK.gel('helpTitle');
 	td.control.saveTitle = JAK.gel('saveTitle');
+	td.control.saveTitle.appendChild(td.control.saveTitle.tdInner = JAK.cel('strong', 'nd-inner'));
 	td.loadSavesInner();
-	JAK.Events.addListener(td.control.saveTitle, 'mousedown', td, td.saveAction);
+	JAK.Events.addListener(td.control.saveTitle.tdInner, 'mousedown', td, td.saveAction);
 
 	JAK.Events.addListener(td.control, 'mousedown', td, td.logAction);
 	td.controlSpaceX = td.control.clientWidth + JAK.DOM.scrollbarWidth();
@@ -224,11 +226,12 @@ td.init = function(logId) {
 };
 
 td.loadLastRequest = function() {
-	var lastReqeust = JSON.parse(b62s.decompress(b62s.base32kTo8(localStorage.tdLastRequest)));
+	var lastRequest = JSON.parse(b62s.decompress(b62s.base32kTo8(localStorage.tdLastRequest)));
 	delete(localStorage.tdLastRequest);
 
-	td.setTdData(lastReqeust['config']);
-	td.setTitlesData(lastReqeust['titles']);
+	td.setTdData(lastRequest['config']);
+	td.setTitlesData(lastRequest['titles']);
+	if (lastRequest['changes']) td.updateChangesData(lastRequest['changes']);
 };
 
 td.ffPreventWheelDouble = function(e) {
@@ -328,7 +331,6 @@ td.changeAction = function(e, el) {
 			this.deleteMe = true;
 
 			td.updateChangeList();
-			td.tdChangeList.removeChild(this);
 			return false;
 		} else if (e.altKey) {
 			if (this.data.type !== 2 && this.varEl && td.isArrayElement(this.varEl)) td.saveVarChange(2, this.varEl);
@@ -877,7 +879,7 @@ td.createChange = function(data, container, varEl, logRow) {
 	} else change.index = {
 		'parentPrefix': key[0] || 'zzzzz',
 		'parentIndex': ~~key[1] || 65535,
-		'changeIndex': data.resId === null ? ++td.noContainerChangeIndex : 32767 + ~~data.resId.split('_').reverse()[0]
+		'changeIndex': typeof data.resId === 'undefined' ? ++td.noContainerChangeIndex : 32767 + ~~data.resId.split('_').reverse()[0]
 	};
 
 	if (data.resId) {
@@ -1825,18 +1827,51 @@ td.setTitlesData = function(titlesData) {
 	return true;
 };
 
-td.getChangesData = function() {
-	var i, j, changesData = [], changeData;
+td.getChangesData = function(allData) {
+	var i, j, change, changesData = [], changeData;
 	for (i = 0, j = td.changes.length; i < j; ++i) {
-		changeData = td.changes[i].data;
-		changesData.push([
-			changeData.path,
-			changeData.type === 2 ? '' : (changeData.type === 3 ? JSON.stringify(changeData.value) : changeData.value),
-			changeData.type,
-			(td.changes[i].resEl ? td.changes[i].resEl.fullHeight : changeData.fullHeight) ? 1 : 0
-		]);
+		change = td.changes[i];
+		changeData = [
+			change.data.path,
+			change.data.type === 2 ? '' : (change.data.type === 3 ? JSON.stringify(change.data.value) : change.data.value),
+			change.data.type,
+			(td.changes[i].resEl ? td.changes[i].resEl.fullHeight : change.data.fullHeight) ? 1 : 0
+		];
+		if (allData) changeData.push(change.varEl ? change.varEl.title : '', change.valid, change.formated);
+		changesData.push(changeData);
 	}
 	return changesData;
+};
+
+td.updateChangesData = function(changesData) {
+	var i, j, change, loadChanges = [], keepChanges = [];
+	for (i = 0, j = changesData.length; i < j; ++i) {
+		if (change = td.getSameChange(changesData[i])) {
+			if (change.varEl) change.varEl.title = changesData[i][4];
+			change.data.type = changesData[i][2];
+			change.data.value = change.data.type === 3 ? JSON.parse(changesData[i][1]) : changesData[i][1];
+			change.valid = changesData[i][5];
+			change.formated = changesData[i][6];
+			keepChanges.push(change);
+		} else {
+			loadChanges.push({
+				'path': changesData[i][0],
+				'value': changesData[i][1],
+				'type': changesData[i][2],
+				'valid': changesData[i][5],
+				'formated': changesData[i][6]
+			});
+		}
+	}
+	for (i = td.changes.length; i-- > 0;) if (keepChanges.indexOf(td.changes[i]) === -1) td.changes[i].deleteMe = true;
+	td.setChangesData(loadChanges);
+};
+
+td.getSameChange = function(changeData) {
+	var i = td.changes.length, matches = {};
+	while (i-- > 0) matches[td.changes[i].data.type % 2  + '§' + td.changes[i].data.path] = td.changes[i];
+	if (matches[i = changeData[2] % 2 + '§' + changeData[0]]) return matches[i];
+	return false;
 };
 
 td.setChangesData = function(changesData) {
@@ -1865,8 +1900,8 @@ td.setChangesData = function(changesData) {
 		}
 
 		change = td.createChange(changesData[i], container, varEl, log);
-		change.valid = true;
-		change.formated = true;
+		change.valid = typeof changesData[i].valid !== 'undefined' ? changesData[i].valid : true;
+		change.formated = typeof changesData[i].formated !== 'undefined' ? changesData[i].formated : true;
 		if (change.resEl && changesData[i].fullHeight === 1) td.switchFullHeight(change.resEl, 2);
 	}
 	td.updateChangeList();
@@ -1984,44 +2019,51 @@ td.setTdData = function(tdData) {
 td.sendChanges = function(e) {
 	td.tdStop(e);
 
-	var i, j, changes, changesBase62, newLoc, url;
-	if (!td.allowClick || td.actionData.element !== null || e.button !== JAK.Browser.mouse.left || !(changes = td.getChangesData()).length) {
-		return false;
-	}
+	if (!td.allowClick || td.tdConsole !== null || td.actionData.element !== null || e.button !== JAK.Browser.mouse.left) return false;
 
 	td.disableClick();
 	if (td.activeTitle !== null) td.hideTitle();
 
-	changesBase62 = b62s.base8To62(b62s.compress(JSON.stringify(changes)));
+	td.sendData(td.getChangesData(), null, '', e.shiftKey, e.ctrlKey || e.metaKey);
+	return false;
+};
 
-	newLoc = {
-		'url': window.location.protocol + '//' + window.location.host + window.location.pathname,
-		'sendGet': (td.get ? '?' + td.get + '&' : '?') + 'tdRequest=' + changesBase62,
+td.sendData = function(data, lastRequest, url, _blank, forcePost) {
+	data = data || [];
+	_blank = !!_blank;
+
+	var i, j, dataBase62 = b62s.base8To62(b62s.compress(JSON.stringify(data)));
+
+	var newLoc = {
+		'url': url || window.location.protocol + '//' + window.location.host + window.location.pathname,
+		'sendGet': (td.get ? '?' + td.get + '&' : '?') + 'tdRequest=' + dataBase62,
 		'postGet': td.get ? '?' + td.get : '',
 		'hashGet': (td.get ? '?' + td.get + '&' : '?') + 'tdHash='
 	};
 
-	localStorage.tdLastRequest = b62s.base8To32k(b62s.compress(JSON.stringify({'config': td.getTdData(), 'titles': td.getTitlesData()})));
+	localStorage.tdLastRequest = b62s.base8To32k(b62s.compress(JSON.stringify(
+		lastRequest || {'config': td.getTdData(), 'titles': td.getTitlesData()}
+	)));
 
-	if (td.post.length || e.ctrlKey || e.metaKey) {
+	if (td.post.length || forcePost) {
 		var req = JAK.mel('form', {'action': newLoc.url + newLoc.postGet, 'method': 'post'}, {'display': 'none'});
-		if (e.shiftKey) req.target = '_blank';
+		if (_blank) req.target = '_blank';
 
 		for (i = 0, j = td.post.length; i < j; ++i) {
 			req.appendChild(JAK.mel('textarea', {'name': td.post[i][0], 'value': td.post[i][1]}));
 		}
-		req.appendChild(JAK.mel('textarea', {'name': 'tdRequest', 'value': changesBase62}));
+		req.appendChild(JAK.mel('textarea', {'name': 'tdRequest', 'value': dataBase62}));
 
 		td.logView.appendChild(req);
 		req.submit();
 	} else if ((url = newLoc.url + newLoc.sendGet).length <= td.maxUrlLength) {
-		window.open(url, e.shiftKey ? '_blank' : '_self');
+		window.open(url, _blank ? '_blank' : '_self');
 	} else {
-		var ajax = {'url': newLoc.url + newLoc.postGet, 'hashUrl': newLoc.url + newLoc.hashGet, 'target': e.shiftKey ? '_blank' : '_self'};
+		var ajax = {'url': newLoc.url + newLoc.postGet, 'hashUrl': newLoc.url + newLoc.hashGet, 'target': _blank ? '_blank' : '_self'};
 		ajax.req = function() {
 			var rq = new JAK.Request(JAK.Request.TEXT, {method: "post"});
 			rq.setCallback(ajax, "_resp");
-			rq.send(ajax.url, {'tdcache': changesBase62});
+			rq.send(ajax.url, {'tdcache': dataBase62});
 		};
 
 		ajax._resp = function(reply, status) {
@@ -2041,12 +2083,11 @@ td.sendChanges = function(e) {
 
 		ajax.req();
 	}
-
 	return false;
 };
 
 td.reloadPage = function(e) {
-	if (!td.allowClick || td.actionData.element !== null || e.button !== JAK.Browser.mouse.left) return false;
+	if (!td.allowClick || td.tdConsole !== null || td.actionData.element !== null || e.button !== JAK.Browser.mouse.left) return false;
 
 	td.disableClick();
 	if (td.activeTitle !== null) td.hideTitle();
@@ -2213,15 +2254,21 @@ td.areaWrite = function(el, text, start, end) {
 	el.scrollTop = top;
 };
 
-td.saveState = function(name) {
-	var changes = td.getChangesData(), config = td.getTdData(true), titles = td.getTitlesData();
+td.saveState = function(e) {
+	td.tdStop(e);
+
+	var config = td.getTdData(true);
 	var flags = (config.get ? 'G' : ' ') + (config.post.length ? 'P' : ' ') + (config.oldRequest.length ? 'C' : ' ');
+	var name = td.newSaveName(flags, config.url.match(/^https?:\/\/(.*?)\/?$/)[1]);
 
-	name = td.newSaveName(flags, config.url.match(/^https?:\/\/(.*?)\/?$/)[1]);//name ||
-
-	localStorage[name] = b62s.base8To32k(b62s.compress(JSON.stringify({'changes': changes, 'config': config, 'titles': titles})));
+	localStorage[name] = b62s.base8To32k(b62s.compress(JSON.stringify({
+		'changes': td.getChangesData(true),
+		'config': config,
+		'titles': td.getTitlesData()
+	})));
 
 	td.loadSavesInner();
+	return false;
 };
 
 td.newSaveName = function(flags, name) {
@@ -2231,7 +2278,7 @@ td.newSaveName = function(flags, name) {
 };
 
 td.loadSavesInner = function() {
-	var i, saves = [], rec, inner = JAK.cel('strong', 'nd-inner'), rowData, title = td.control.saveTitle;
+	var i, saves = [], rec, rowData, title = td.control.saveTitle;
 	for (var record in localStorage) {
 		if (localStorage.hasOwnProperty(record) && record.slice(0, 4) === 'td§[') {
 			rec = record.slice(3).split('§');
@@ -2246,14 +2293,12 @@ td.loadSavesInner = function() {
 		}
 	}
 
-	if (!saves.length) inner.innerHTML = '<pre class="nd nd-nosave">No saves</pre>';
+	if (!saves.length) title.tdInner.innerHTML = '<pre class="nd nd-nosave">No saves</pre>';
 	else {
+		JAK.DOM.clear(title.tdInner);
 		saves.sort(function(a, b) { return a.record < b.record; });
-		for (i = saves.length; i-- > 0;) inner.appendChild(JAK.mel('pre', saves[i]));
+		for (i = saves.length; i-- > 0;) title.tdInner.appendChild(JAK.mel('pre', saves[i]));
 	}
-
-	JAK.DOM.clear(title);
-	title.appendChild(inner);
 
 	if (title.style.display !== 'block') return false;
 
@@ -2264,14 +2309,25 @@ td.loadSavesInner = function() {
 };
 
 td.saveAction = function(e) {
-	if (td.tdConsole !== null || e.shiftKey || e.ctrlKey || e.metaKey) return true;
+	td.tdStop(e);
+
+	if (!td.allowClick || td.tdConsole !== null || td.actionData.element !== null) return false;
 	var tar = td.getTargetElement(e);
+	if (!JAK.DOM.hasClass(tar, 'nd-save')) return false;
+
 	if (e.button === JAK.Browser.mouse.right) {
-		if (e.altKey) {
-			delete localStorage[tar.record];
-			td.loadSavesInner();
-		} else td.consoleOpen(tar, td.changeSaveName);
+		if (e.altKey) td.deleteRecord(tar.record);
+		else td.consoleOpen(tar, td.changeSaveName);
+	} else if (e.button === JAK.Browser.mouse.left) {
+		td.disableClick();
+		td.loadState(tar.record, e.altKey, e.shiftKey, e.ctrlKey || e.metaKey);
 	}
+	return false;
+};
+
+td.deleteRecord = function(id) {
+	if (typeof localStorage[id] !== 'undefined') delete localStorage[id];
+	td.loadSavesInner();
 	return true;
 };
 
@@ -2292,5 +2348,39 @@ td.changeSaveName = function() {
 	delete localStorage[tar.record];
 
 	td.loadSavesInner();
+	return true;
+};
+
+td.loadState = function(id, current, _blank, forcePost) {
+	if (!localStorage[id]) {
+		td.loadSavesInner();
+		alert('V localStorage nelze najit pozadovany zaznam s klicem: ' + id);
+		return true;
+	}
+
+	var data;
+
+	try {
+		if (data = JSON.parse(b62s.decompress(b62s.base32kTo8(localStorage[id])))) {
+			td.get = data.config.get;
+			td.post = data.config.post;
+			td.sendData(
+				data.config.oldRequest,
+				data,
+				current ? '' : data.config.url,
+				_blank,
+				forcePost
+			);
+		} else {
+			td.deleteRecord(id);
+			alert('Zaznam v localStorage s klicem: ' + id + ' je prazdny a byl smazan.');
+			return true;
+		}
+	} catch(e) {
+		td.deleteRecord(id);
+		alert('Zaznam v localStorage s klicem: ' + id + ' je vadny a byl smazan.');
+		return true;
+	}
+
 	return true;
 };

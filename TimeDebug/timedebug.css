@@ -157,7 +157,7 @@ pre.nd-location {
 .nd-td .nd-row {
 	margin: 4px 0;
 }
-.nd-td .nd-row, .nd-menu, .nd-change {
+.nd-td .nd-row, .nd-menu, .nd-change, .nd-save {
 	-webkit-touch-callout: none;
 	-webkit-user-select: none;
 	-khtml-user-select: none;
