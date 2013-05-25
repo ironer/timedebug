@@ -5,9 +5,6 @@
  * used sources: Seznam's JAK library (http://seznam.cz)
  */
 
-// TODO: vyexportovat nastaveni do konzole
-// TODO: nacist nastaveni z konzole
-
 // TODO: ulozit serii testu v TimeDebugu
 // TODO: vyplivnout vystup do iframe nebo dalsiho okna
 
@@ -183,8 +180,8 @@ td.init = function(logId) {
 		+ '</strong></span>napoveda</span>'
 		+ '     |&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span id="tdMenuSave">ulozit</span>'
 		+ '&nbsp;&nbsp;&nbsp;&nbsp;<span class="nd-titled"><span id="saveTitle" class="nd-title"></span>nahrat</span>'
-		+ '     |&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span>export</span>'
-		+ '&nbsp;&nbsp;&nbsp;&nbsp;<span>import</span>'
+		+ '     |&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span id="tdMenuExport">export</span>'
+		+ '&nbsp;&nbsp;&nbsp;&nbsp;<span id="tdMenuImport">import</span>'
 		+ '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div><hr>'
 		+ '</strong></span>*</span>';
 
@@ -201,6 +198,8 @@ td.init = function(logId) {
 	td.control.controlTitle.appendChild(td.tdChangeList);
 	if (td.local) JAK.Events.addListener(JAK.gel('tdMenuSend'), 'mousedown', td, td.sendChanges);
 	JAK.Events.addListener(JAK.gel('tdMenuSave'), 'mousedown', td, td.saveState);
+	JAK.Events.addListener(JAK.gel('tdMenuExport'), 'mousedown', td, td.exportSaves);
+	JAK.Events.addListener(JAK.gel('tdMenuImport'), 'mousedown', td, td.importSaves);
 
 	JAK.Events.addListener(JAK.gel('tdMenuRestore'), 'mousedown', td, td.reloadPage);
 	td.showDump(logId);
@@ -992,12 +991,13 @@ td.consoleAction = function(e) {
 	return true;
 };
 
-td.consoleOpen = function(el, callback) {
+td.consoleOpen = function(el, callback, areaValue) {
 	td.tdConsole = JAK.mel('div', {'id':'tdConsole'});
 	td.tdConsole.mask = JAK.mel('div', {'id':'tdConsoleMask'});
 
 	var attribs = {id:'tdConsoleArea'};
-	if (el.areaValue) attribs.value = el.areaValue;
+	if (areaValue) attribs.value = areaValue;
+	else if (el.areaValue) attribs.value = el.areaValue;
 	else if (el.title) {
 		attribs.value = td.tdConsole.mask.title = el.title;
 		el.title = null;
@@ -1022,7 +1022,7 @@ td.consoleOpen = function(el, callback) {
 	if (el.change) {
 		JAK.DOM.addClass(el.change, 'nd-edited');
 		if (el.change.resEl) JAK.DOM.addClass(el.change.resEl, 'nd-edited');
-	} else if (!el.areaValue) JAK.DOM.addClass(el, 'nd-edited');
+	} else if (!el.areaValue && el.tagName.toLowerCase() !== 'body') JAK.DOM.addClass(el, 'nd-edited');
 };
 
 td.textareaFocus = function() {
@@ -2379,7 +2379,7 @@ td.loadState = function(id, current, _blank, forcePost) {
 			);
 		} else {
 			td.deleteRecord(id);
-			alert('Zaznam v localStorage s klicem: ' + id + ' je prazdny a byl smazan.');
+			alert('Zaznam v localStorage s klicem: ' + id + ' se nepovedlo dekomprimovat a byl smazan.');
 			return true;
 		}
 	} catch(e) {
@@ -2388,5 +2388,57 @@ td.loadState = function(id, current, _blank, forcePost) {
 		return true;
 	}
 
+	return true;
+};
+
+td.exportSaves = function(e) {
+	td.tdStop(e);
+
+	var saves = [];
+	for (var record in localStorage) {
+		if (localStorage.hasOwnProperty(record) && record.slice(0, 4) === 'td§[') {
+			saves.push({'name': record, 'data': b62s.base8To62(b62s.base32kTo8(localStorage[record]))});
+		}
+	}
+
+	saves.sort(function(a, b) { return a.record < b.record; });
+
+	td.consoleOpen(document.body, null, td.formatJson(saves));
+};
+
+td.importSaves = function(e) {
+	td.tdStop(e);
+	td.consoleOpen(document.body, td.loadSaves);
+	return false;
+};
+
+td.loadSaves = function() {
+	var i, j, area = td.tdConsole.area.value, names2Ids = {}, records, stats = {'ignore': [], 'duplicates': [], 'ok': []};
+	try {
+		records = JSON.parse(area);
+		for (i = 0, j = records.length; i < j; ++i) {
+			if (records[i].name.slice(0, 4) === 'td§[') {
+				if (localStorage[records[i].name]) stats.duplicates.push(records[i].name);
+				stats.ok.push(records[i].name);
+				names2Ids[records[i].name] = i;
+			} else stats.ignore.push(records[i].name);
+		}
+		var retText = (stats.ignore.length
+			? 'Vynechat ' + stats.ignore.length + ' zaznamu s vadnym prefixem:\n\t' + stats.ignore.join('\n\t') + '\n\n'
+			: '')
+			+ (stats.ok.length ? 'Importovat ' + stats.ok.length + ' zaznamu.\n\n' : '')
+			+ (stats.duplicates.length
+			? 'Z toho nahradit ' + stats.duplicates.length + ' stavajicich zaznamu s id:\n\t' + stats.duplicates.join('\n\t')
+			: '');
+		if (stats.ignore.length || !stats.ok.length || stats.duplicates.length) {
+			if (!confirm(retText)) return false;
+		}
+		for (i = stats.ok.length; i-- > 0;) localStorage[stats.ok[i]] = b62s.base8To32k(b62s.base62To8(records[names2Ids[stats.ok[i]]].data));
+	} catch(e) {
+		alert('Zadana data nelze importovat!');
+		return false;
+	}
+	td.consoleClose();
+	td.loadSavesInner();
 	return true;
 };
