@@ -5,7 +5,7 @@
  * used sources: Seznam's JAK library (http://seznam.cz)
  */
 
-// TODO: animace pro dokonceni title action
+// TODO: zobrazit modifikovane zmeny po loadu
 // TODO: vyexportovat nastaveni do konzole
 // TODO: nacist nastaveni z konzole
 
@@ -1419,6 +1419,7 @@ td.startTitleResize = function(e, el) {
 	td.actionData.width = (el.tdWidth === 'auto' ? el.offsetWidth : el.tdWidth);
 	td.actionData.height = (el.tdHeight === 'auto' ? el.clientHeight : el.tdHeight);
 	td.actionData.element = el;
+	JAK.DOM.addClass(el, 'nd-action');
 
 	td.actionData.listeners.push(
 			JAK.Events.addListener(document, 'mousemove', td, td.titleResizing),
@@ -1448,6 +1449,7 @@ td.startTitleDrag = function(e, el) {
 	td.actionData.offsetX = el.data.left;
 	td.actionData.offsetY = el.data.top;
 	td.actionData.element = el;
+	JAK.DOM.addClass(el, 'nd-action');
 
 	td.actionData.listeners.push(
 			JAK.Events.addListener(document, 'mousemove', td, td.titleDragging),
@@ -1476,6 +1478,7 @@ td.endTitleAction = function() {
 	var el = td.actionData.element;
 
 	if (el !== null) {
+		JAK.DOM.removeClass(el, 'nd-action');
 		JAK.Events.removeListeners(td.actionData.listeners);
 		td.actionData.listeners.length = 0;
 		td.actionData.element = null;

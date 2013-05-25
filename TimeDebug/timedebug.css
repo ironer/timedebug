@@ -48,7 +48,7 @@ pre.nd-location {
 	background: #9f3;
 	border-radius: 4px;
 }
-.nd-titled:hover>.nd-pinned {
+.nd-titled:hover>.nd-pinned, .nd-titled>span.nd-title.nd-action {
 	border-top: 8px solid #f10;
 }
 .nd-title, .nd-titled>.nd-title:hover {
