@@ -2423,6 +2423,10 @@ td.loadSaves = function() {
 				names2Ids[records[i].name] = i;
 			} else stats.ignore.push(records[i].name);
 		}
+		if (!stats.ok.length) {
+			alert('Nebyla zadana zadna data k importovani.');
+			return false;
+		}
 		var retText = (stats.ignore.length
 			? 'Vynechat ' + stats.ignore.length + ' zaznamu s vadnym prefixem:\n\t' + stats.ignore.join('\n\t') + '\n\n'
 			: '')
@@ -2430,7 +2434,7 @@ td.loadSaves = function() {
 			+ (stats.duplicates.length
 			? 'Z toho nahradit ' + stats.duplicates.length + ' stavajicich zaznamu s id:\n\t' + stats.duplicates.join('\n\t')
 			: '');
-		if (stats.ignore.length || !stats.ok.length || stats.duplicates.length) {
+		if (stats.ignore.length || stats.duplicates.length) {
 			if (!confirm(retText)) return false;
 		}
 		for (i = stats.ok.length; i-- > 0;) localStorage[stats.ok[i]] = b62s.base8To32k(b62s.base62To8(records[names2Ids[stats.ok[i]]].data));

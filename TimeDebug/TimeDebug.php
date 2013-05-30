@@ -26,6 +26,7 @@ class TimeDebug {
 			TRUNCATE = 'truncate', // how truncate long strings? (defaults to 70)
 			COLLAPSE = 'collapse', // always collapse? (defaults to false)
 			COLLAPSE_COUNT = 'collapseCount', // how big array/object are collapsed? (defaults to 7)
+			TRUNCATE_COUNT = 'collapseCount', // how big array/object are truncated? (defaults to 30)
 			NO_BREAK = 'noBreak', // return dump without line breaks (defaults to false)
 			APP_RECURSION = 'appRecursion', // force { RECURSION } on all nested objects with given self::$recClass
 			PARENT_KEY = 'parentKey', // sets parent key for children's div to attribute 'data-pk' for arrays and objects
@@ -577,6 +578,7 @@ class TimeDebug {
 			self::DEPTH => 2,
 			self::COLLAPSE => FALSE,
 			self::COLLAPSE_COUNT => 5,
+			self::TRUNCATE_COUNT => 10,
 			self::TRUNCATE => 30,
 			self::NO_BREAK => FALSE
 		);
@@ -651,6 +653,7 @@ class TimeDebug {
 					self::TRUNCATE => 70,
 					self::COLLAPSE => FALSE,
 					self::COLLAPSE_COUNT => 7,
+					self::TRUNCATE_COUNT => 30,
 					self::NO_BREAK => FALSE,
 					self::APP_RECURSION => is_object($var) && (get_class($var) !== self::$recClass),
 					self::TITLE_PATH => ''
@@ -834,7 +837,9 @@ class TimeDebug {
 			return $out . (count($var) - 1) . ") [ <i>RECURSION</i> ]" . ($options[self::NO_BREAK] ? '' : "\n");
 
 		} elseif (!$options[self::DEPTH] || $level < $options[self::DEPTH]) {
-			$collapsed = $level ? count($var) >= $options[self::COLLAPSE_COUNT] : $options[self::COLLAPSE];
+			$cnt = count($var);
+			$collapsed = $level ? $cnt >= $options[self::COLLAPSE_COUNT] : $options[self::COLLAPSE];
+
 			if (self::$advancedLog) $key = $parentKey ?: (!$level ? "2" : '');
 			else $key = '';
 			if ($key && !empty($options[self::TITLE_PATH])) $options[self::TITLE_PATH] .= '§' . $key;
@@ -842,7 +847,13 @@ class TimeDebug {
 			$out = '<span class="nd-toggle nette-toggle' . ($collapsed ? '-collapsed">' : '">') . $out . count($var)
 					. ")</span>\n<div" . ($collapsed ? ' class="nette-collapsed"' : '') . ($key ? " data-pk=\"$key\">" : '>');
 			$var[$marker] = TRUE;
+			$i = 0;
+
 			foreach ($var as $k => &$v) {
+				if (++$i > $options[self::TRUNCATE_COUNT]) {
+					$out .= '<span class="nd-truncated">[ <i>TRUNCATED ' . ($cnt - $options[self::TRUNCATE_COUNT]) . ' ELEMENTS</i> ]</span>';
+					break;
+				}
 				if ($k !== $marker) {
 					$out .= '<span class="nd-key">'
 							. (preg_match('#^\w+\z#', $k) ? $myKey = $k : '"' . ($myKey = self::encodeString($k, TRUE)) . '"')
@@ -877,7 +888,9 @@ class TimeDebug {
 			return $out . " { <i>RECURSION</i> }" . ($options[self::NO_BREAK] ? '' : "\n");
 
 		} elseif (!$options[self::DEPTH] || $level < $options[self::DEPTH]) {
-			$collapsed = $level ? count($fields) >= $options[self::COLLAPSE_COUNT] : $options[self::COLLAPSE];
+			$cnt = count($fields);
+			$collapsed = $level ? $cnt >= $options[self::COLLAPSE_COUNT] : $options[self::COLLAPSE];
+
 			if (self::$advancedLog) $key = $parentKey ?: (!$level ? "1$varClass" : '');
 			else $key = '';
 			if ($key && !empty($options[self::TITLE_PATH])) $options[self::TITLE_PATH] .= '§' . $key;
@@ -885,7 +898,13 @@ class TimeDebug {
 			$out = '<span class="nd-toggle nette-toggle' . ($collapsed ? '-collapsed">' : '">') . $out . "</span>\n<div"
 					. ($collapsed ? ' class="nette-collapsed"' : '') . ($key ? " data-pk=\"$key\">" : '>');
 			$list[] = $var;
+			$i = 0;
+
 			foreach ($fields as $k => &$v) {
+				if (++$i > $options[self::TRUNCATE_COUNT]) {
+					$out .= '<span class="nd-truncated">{ <i>TRUNCATED ' . ($cnt - $options[self::TRUNCATE_COUNT]) . ' PROPERTIES</i> }</span>';
+					break;
+				}
 				$vis = '';
 				if ($k[0] === "\x00") {
 					$vis = ' <span class="nd-visibility">' . ($k[1] === '*' ? 'protected' : 'private') . '</span>';
