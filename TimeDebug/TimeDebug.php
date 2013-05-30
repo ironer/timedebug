@@ -26,7 +26,7 @@ class TimeDebug {
 			TRUNCATE = 'truncate', // how truncate long strings? (defaults to 70)
 			COLLAPSE = 'collapse', // always collapse? (defaults to false)
 			COLLAPSE_COUNT = 'collapseCount', // how big array/object are collapsed? (defaults to 7)
-			TRUNCATE_COUNT = 'collapseCount', // how big array/object are truncated? (defaults to 30)
+			TRUNCATE_COUNT = 'truncateCount', // how big array/object are truncated? (defaults to 30)
 			NO_BREAK = 'noBreak', // return dump without line breaks (defaults to false)
 			APP_RECURSION = 'appRecursion', // force { RECURSION } on all nested objects with given self::$recClass
 			PARENT_KEY = 'parentKey', // sets parent key for children's div to attribute 'data-pk' for arrays and objects
