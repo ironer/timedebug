@@ -2069,7 +2069,7 @@ td.sendData = function(data, lastRequest, url, _blank, forcePost) {
 		ajax.req = function() {
 			var rq = new JAK.Request(JAK.Request.TEXT, {method: "post"});
 			rq.setCallback(ajax, "_resp");
-			rq.send(ajax.url, {'tdcache': dataBase62});
+			rq.send(ajax.url, {'tdCache': dataBase62});
 		};
 
 		ajax._resp = function(reply, status) {
