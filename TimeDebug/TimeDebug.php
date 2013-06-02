@@ -13,26 +13,26 @@
 class TimeDebug {
 
 	const INIT_ADVANCED_LOG = 'advancedLog', // option for init() to trigger advanced logging (defaults to FALSE)
-			INIT_LOCAL = 'local', // option for init() to trigger local server features (defaults to FALSE)
-			INIT_ROOT = 'root', // absolute path to the root of web aplication (for path shortening to relative, defaults to '')
-			INIT_START_TIME = 'startTime', // microtime of application start for calculations (defaults to microtime(TRUE))
-			INIT_START_MEMORY = 'startMemory', // starting amount of used memory for calculation of used resources (defaults to 0)
-			INIT_PATH_CONSTANTS = 'pathConstants', // array of constants containing absolute paths (e.g. CLASSES with value '/web/myapp/classes')
-			INIT_GET = 'get', // option for init() with get variables for passing during debugging (defaults to &$_GET)
-			INIT_POST = 'post', // option for init() with post variables for passing during debugging (defaults to &$_POST)
-			INIT_MAX_URL_LENGTH = 'urlLength', // maximum allowed length of URL for sending data, otherwise pre posting is used
+		INIT_LOCAL = 'local', // option for init() to trigger local server features (defaults to FALSE)
+		INIT_ROOT = 'root', // absolute path to the root of web aplication (for path shortening to relative, defaults to '')
+		INIT_START_TIME = 'startTime', // microtime of application start for calculations (defaults to microtime(TRUE))
+		INIT_START_MEMORY = 'startMemory', // starting amount of used memory for calculation of used resources (defaults to 0)
+		INIT_PATH_CONSTANTS = 'pathConstants', // array of constants containing absolute paths (e.g. CLASSES with value '/web/myapp/classes')
+		INIT_GET = 'get', // option for init() with get variables for passing during debugging (defaults to &$_GET)
+		INIT_POST = 'post', // option for init() with post variables for passing during debugging (defaults to &$_POST)
+		INIT_MAX_URL_LENGTH = 'urlLength', // maximum allowed length of URL for sending data, otherwise pre posting is used
 
-			DEPTH = 'depth', // how many nested levels of array/object properties display (defaults to 8)
-			TRUNCATE = 'truncate', // how truncate long strings? (defaults to 70)
-			COLLAPSE = 'collapse', // always collapse? (defaults to false)
-			COLLAPSE_COUNT = 'collapseCount', // how big array/object are collapsed? (defaults to 7)
-			TRUNCATE_COUNT = 'truncateCount', // how big array/object are truncated? (defaults to 30)
-			NO_BREAK = 'noBreak', // return dump without line breaks (defaults to false)
-			APP_RECURSION = 'appRecursion', // force { RECURSION } on all nested objects with given self::$recClass
-			PARENT_KEY = 'parentKey', // sets parent key for children's div to attribute 'data-pk' for arrays and objects
-			DUMP_ID = 'dumpId', // id for .nd 'pre' in HTML form
-			TDVIEW_INDEX = 'tdIndex', // data-tdindex of .nd 'pre' in tdView
-			TITLE_PATH = 'titlePath'; // path for finding titles in js by id
+		DEPTH = 'depth', // how many nested levels of array/object properties display (defaults to 8)
+		TRUNCATE = 'truncate', // how truncate long strings? (defaults to 70)
+		COLLAPSE = 'collapse', // always collapse? (defaults to false)
+		COLLAPSE_COUNT = 'collapseCount', // how big array/object are collapsed? (defaults to 7)
+		TRUNCATE_COUNT = 'truncateCount', // how big array/object are truncated? (defaults to 30)
+		NO_BREAK = 'noBreak', // return dump without line breaks (defaults to false)
+		APP_RECURSION = 'appRecursion', // force { RECURSION } on all nested objects with given self::$recClass
+		PARENT_KEY = 'parentKey', // sets parent key for children's div to attribute 'data-pk' for arrays and objects
+		DUMP_ID = 'dumpId', // id for .nd 'pre' in HTML form
+		TDVIEW_INDEX = 'tdIndex', // data-tdindex of .nd 'pre' in tdView
+		TITLE_PATH = 'titlePath'; // path for finding titles in js by id
 
 
 	private static $initialized = FALSE;
@@ -171,7 +171,7 @@ class TimeDebug {
 		} elseif (isset($options[self::INIT_GET]['tdHash'])) {
 			if (!file_exists($fileChanges = self::$cache . $options[self::INIT_GET]['tdHash'])) {
 				throw new Exception("Soubor obsahujici zmeny '" . substr($fileChanges, strlen(self::$root))
-						. "' nelze najit v cache.");
+					. "' nelze najit v cache.");
 			}
 			self::$request = json_decode(file_get_contents($fileChanges), TRUE);
 			unset($options[self::INIT_GET]['tdHash']);
@@ -204,7 +204,7 @@ class TimeDebug {
 					self::$request[$i]['varPath'] = array_slice($path, 2);
 					if (!self::prepareVarPath($i)) {
 						echo '<pre class="nd-error"> Chyba pozadavku na zmenu v dumpu ' . $path[1] . ': '
-								. self::$request[$i]['error'] . ' </pre>';
+							. self::$request[$i]['error'] . ' </pre>';
 						continue;
 					}
 					if (isset(self::$request['dumps'][$path[1]])) self::$request['dumps'][$path[1]][] = $i;
@@ -213,7 +213,7 @@ class TimeDebug {
 					self::$request[$i]['varPath'] = array_slice($path, 3);
 					if (!self::prepareVarPath($i)) {
 						echo '<pre class="nd-error"> Chyba pozadavku na zmenu v logu ' . $path[1] . '(' . $path[2] . '): '
-								. self::$request[$i]['error'] . ' </pre>';
+							. self::$request[$i]['error'] . ' </pre>';
 						continue;
 					}
 					if (isset(self::$request['logs'][$path[1]])) {
@@ -305,13 +305,13 @@ class TimeDebug {
 		echo "\n";
 		readfile(__DIR__ . '/timedebug.js');
 		echo "\ntd.local = " . (self::$local ? 'true' : 'false') . ";\n"
-				. "td.indexes = " . json_encode(self::$timeDebug) . ";\n"
-				. "td.get = " . json_encode(self::getGetText()) . ";\n"
-				. "td.post = " . json_encode(self::getPostArray()) . ";\n"
-				. "td.maxUrlLength = " . intval(self::$maxUrlLength) . ";\n"
-				. "td.response = " . json_encode(self::getResponse()) . ";\n"
-				. "td.help = " . (!empty($tdHelp) ? json_encode(trim(self::toHtml($tdHelp))): "''") . ";\n"
-				. "td.init(1);\n</script>\n";
+			. "td.indexes = " . json_encode(self::$timeDebug, JSON_UNESCAPED_UNICODE) . ";\n"
+			. "td.get = " . json_encode(self::getGetText(), JSON_UNESCAPED_UNICODE) . ";\n"
+			. "td.post = " . json_encode(self::getPostArray(), JSON_UNESCAPED_UNICODE) . ";\n"
+			. "td.maxUrlLength = " . intval(self::$maxUrlLength) . ";\n"
+			. "td.response = " . json_encode(self::getResponse(), JSON_UNESCAPED_UNICODE) . ";\n"
+			. "td.help = " . (!empty($tdHelp) ? json_encode(trim(self::toHtml($tdHelp)), JSON_UNESCAPED_UNICODE): "''") . ";\n"
+			. "td.init(1);\n</script>\n";
 	}
 
 
@@ -373,13 +373,13 @@ class TimeDebug {
 		}
 
 		echo "<pre" . ($object === NULL ? '' : " data-runtime=\"" . number_format(1000*(microtime(TRUE)-self::$startTime),2,'.','')
-				. "\" data-title=\"" . (empty($path) ? '' : "$path> ") . "$text\"") . "$tdParams>["
-				. str_pad(self::runtime(self::$lastRuntime), 8, ' ', STR_PAD_LEFT) . ' / '
-				. str_pad(self::memory(self::$lastMemory), 8, ' ', STR_PAD_LEFT) . ']' . " $textOut [<small>";
+			. "\" data-title=\"" . (empty($path) ? '' : "$path> ") . "$text\"") . "$tdParams>["
+			. str_pad(self::runtime(self::$lastRuntime), 8, ' ', STR_PAD_LEFT) . ' / '
+			. str_pad(self::memory(self::$lastMemory), 8, ' ', STR_PAD_LEFT) . ']' . " $textOut [<small>";
 
 		if (self::$local) {
 			echo '<a href="editor://open/?file=' . rawurlencode($file) . "&line=$line"
-					. "\" class=\"nd-editor\"><i>" . htmlspecialchars($relative) . "</i> <b>@$line</b></a>";
+				. "\" class=\"nd-editor\"><i>" . htmlspecialchars($relative) . "</i> <b>@$line</b></a>";
 		} else {
 			echo "<span class=\"nd-editor\"><i>" . htmlspecialchars($relative) . "</i> <b>@$line</b></span>";
 		}
@@ -400,8 +400,8 @@ class TimeDebug {
 		$relative = substr($file, strlen(self::$root));
 
 		echo '<hr>' . ($file ? '<pre class="nd-location"><b>Dump</b> in <' . (self::$local ? 'a href="editor://open/?file='
-		. rawurlencode($file) . "&amp;line=$line\"" : 'span') . " class=\"nd-editor\"><i>"
-		. htmlspecialchars($relative) . "</i> <b>@$line</b></a> $code</pre>" : '');
+			. rawurlencode($file) . "&amp;line=$line\"" : 'span') . " class=\"nd-editor\"><i>"
+			. htmlspecialchars($relative) . "</i> <b>@$line</b></a> $code</pre>" : '');
 
 		$j = 0;
 		if (isset($backtrace[$callbackIndex]["args"][0])) {
@@ -442,10 +442,10 @@ class TimeDebug {
 				$retText .= $applied[2];
 			} catch(Exception $e) {
 				$retText .= '<pre id="' . $change['resId'] . '" class="nd-result nd-error"><div class="nd-rollover"><div class="nd-indenter">'
-						. ($change['type'] % 2 ? ' Chyba pri rozsirovani pole polem ' : ' Chyba pri modifikaci promenne na hodnotu ')
-						. ($change['type'] === 3 ? $change['value'] : json_encode($change['value']))
-						. ($change['type'] % 2 ? '' : ' (' . gettype($change['value']) . ')')
-						. ': ' . $e->getMessage() . ' </div></div></pre>';
+					. ($change['type'] % 2 ? ' Chyba pri rozsirovani pole polem ' : ' Chyba pri modifikaci promenne na hodnotu ')
+					. ($change['type'] === 3 ? $change['value'] : json_encode($change['value'], JSON_UNESCAPED_UNICODE))
+					. ($change['type'] % 2 ? '' : ' (' . gettype($change['value']) . ')')
+					. ': ' . $e->getMessage() . ' </div></div></pre>';
 				$change['res'] = $e->getCode();
 			}
 			unset($change['varPath']);
@@ -456,7 +456,7 @@ class TimeDebug {
 
 	private static function applyChange(&$var = NULL, $varPath = array(), &$value = NULL, &$name = NULL, &$type = 0, &$path = '') {
 		if (empty($varPath) || !is_array($varPath)) throw new Exception('Neni nastavena neprazdna cesta typu pole (nalezen typ '
-				. gettype($varPath) . ') pro zmenu v promenne typu ' . gettype($var), 7);
+			. gettype($varPath) . ') pro zmenu v promenne typu ' . gettype($var), 7);
 
 		$step = $varPath[0]['step'];
 		$priv = isset($varPath[0]['priv']) ? $varPath[0]['priv'] : 0;
@@ -511,15 +511,17 @@ class TimeDebug {
 				}
 
 				if ($oriVar === $var) ++$retVal[0];
-				$retText .= ' pole ' . json_encode($oriVar) . ' polem ' . ($type === 2 ? $value : json_encode($values)) . '. ';
+				$retText .= ' pole ' . json_encode($oriVar, JSON_UNESCAPED_UNICODE) . ' polem '
+					. ($type === 2 ? $value : json_encode($values, JSON_UNESCAPED_UNICODE)) . '. ';
 			} elseif ($type) {
 				throw new Exception('Nepovedlo se odebrani prvku z pole na indexu "' . $varPath[0]['key'] . '".', 9);
 			} elseif ($changed) {
 				$retVal[0] = 1;
-				$retText .= ' Zmena z ' . json_encode($oriVar) . ' (' . gettype($oriVar) . ') na ' . json_encode($var) . ' (' . gettype($var) . '). ';
+				$retText .= ' Zmena z ' . json_encode($oriVar, JSON_UNESCAPED_UNICODE) . ' (' . gettype($oriVar) . ') na '
+					. json_encode($var, JSON_UNESCAPED_UNICODE) . ' (' . gettype($var) . '). ';
 			} else {
 				$retVal[0] = 2;
-				$retText .= ' Ponechana puvodni identicka hodnota ' . json_encode($var) . ' (' . gettype($var) . '). ';
+				$retText .= ' Ponechana puvodni identicka hodnota ' . json_encode($var, JSON_UNESCAPED_UNICODE) . ' (' . gettype($var) . '). ';
 			}
 
 			$retVal[1] = self::dumpSmallVar($oriVar, array(self::DUMP_ID => TRUE, self::TITLE_PATH => $path));
@@ -535,8 +537,8 @@ class TimeDebug {
 					$retVal[0] = 1;
 					$retVal[1] = self::dumpSmallVar($oriVar[$index], array(self::DUMP_ID => TRUE, self::TITLE_PATH => $path));
 					$retVal[2] = '<pre' . ( $name ? ' id="' . $name . '"' : '') . ' class="nd-result nd-unseted"><div class="nd-rollover">'
-							. '<div class="nd-indenter"> Odstranen prvek z pole s indexem "' . $index . '" a hodnotou ' . json_encode($oriVar[$index])
-							. ' (' . gettype($oriVar[$index]) . '). </div></div></pre>';
+						. '<div class="nd-indenter"> Odstranen prvek z pole s indexem "' . $index . '" a hodnotou '
+						. json_encode($oriVar[$index], JSON_UNESCAPED_UNICODE) . ' (' . gettype($oriVar[$index]) . '). </div></div></pre>';
 				} else throw new Exception('Nepovedlo se odebrani prvku z pole na indexu "' . $varPath[0]['key'] . '".', 9);
 			} else {
 				$retVal = self::applyChange($var[$index], array_slice($varPath, 1), $value, $name, $type, $path);
@@ -645,19 +647,19 @@ class TimeDebug {
 
 	private static function toHtml($var, array $options = NULL, $hash = '') {
 		return '<pre' . ($hash ? ' data-hash="' . $hash . '"' : '')
-				. (!empty($options[self::DUMP_ID]) ? ' data-runtime="' . number_format(1000*(microtime(TRUE)-self::$startTime),2,'.','')
+			. (!empty($options[self::DUMP_ID]) ? ' data-runtime="' . number_format(1000*(microtime(TRUE)-self::$startTime),2,'.','')
 				. '" id="' . $options[self::DUMP_ID] . '" class="nd nd-dump"': ' class="nd"')
-				. (isset($options[self::TDVIEW_INDEX]) ? ' data-tdindex="' . $options[self::TDVIEW_INDEX] . '">' : '>')
-				. self::dumpVar($var, (array) $options + array(
-					self::DEPTH => 8,
-					self::TRUNCATE => 70,
-					self::COLLAPSE => FALSE,
-					self::COLLAPSE_COUNT => 7,
-					self::TRUNCATE_COUNT => 30,
-					self::NO_BREAK => FALSE,
-					self::APP_RECURSION => is_object($var) && (get_class($var) !== self::$recClass),
-					self::TITLE_PATH => ''
-				)) . "</pre>";
+			. (isset($options[self::TDVIEW_INDEX]) ? ' data-tdindex="' . $options[self::TDVIEW_INDEX] . '">' : '>')
+			. self::dumpVar($var, (array) $options + array(
+				self::DEPTH => 8,
+				self::TRUNCATE => 70,
+				self::COLLAPSE => FALSE,
+				self::COLLAPSE_COUNT => 7,
+				self::TRUNCATE_COUNT => 30,
+				self::NO_BREAK => FALSE,
+				self::APP_RECURSION => is_object($var) && (get_class($var) !== self::$recClass),
+				self::TITLE_PATH => ''
+			)) . "</pre>";
 	}
 
 
@@ -703,8 +705,8 @@ class TimeDebug {
 							$path = '2§H@$H§' . $i;
 							if(self::$advancedLog && is_array($arg) && $cnt = count($arg)) {
 								$args[] = '<span class="nd-array nd-titled">'
-										. self::createTitle('<pre class="nd">' . self::dumpSmallVar($arg, array(self::TITLE_PATH => $path))
-												. '</pre>', $path) . 'array</span> (' . $cnt . ')';
+									. self::createTitle('<pre class="nd">' . self::dumpSmallVar($arg, array(self::TITLE_PATH => $path))
+										. '</pre>', $path) . 'array</span> (' . $cnt . ')';
 							} else {
 								$args[] = self::dumpVar($arg, array(
 									self::APP_RECURSION => FALSE,
@@ -721,8 +723,8 @@ class TimeDebug {
 					$line = trim($lines[$backtrace[$id]['line'] - 1]);
 
 					$code = '<span title="' . htmlspecialchars($line . "\nin " . substr($backtrace[$id]['file'], strlen(self::$root))
-							. ' @' . $backtrace[$id]['line'], ENT_COMPAT) . '">' . $backtrace[$id]['class']
-							. $backtrace[$id]['type'] . $backtrace[$id]['function'] . '</span>(' . implode(', ', $args) . ')';
+						. ' @' . $backtrace[$id]['line'], ENT_COMPAT) . '">' . $backtrace[$id]['class']
+						. $backtrace[$id]['type'] . $backtrace[$id]['function'] . '</span>(' . implode(', ', $args) . ')';
 				} else $code = '';
 
 				return array($item['file'], $item['line'], $code, $place);
@@ -743,26 +745,26 @@ class TimeDebug {
 
 	private static function dumpNull(&$var, $options, $level) {
 		return '<span class="nd-null' . (($level || empty($options[self::DUMP_ID])) ? '' : ' nd-top') . '">NULL</span>'
-				. ($options[self::NO_BREAK] ? '' : "\n");
+			. ($options[self::NO_BREAK] ? '' : "\n");
 	}
 
 
 	private static function dumpBoolean(&$var, $options, $level) {
 		return '<span class="nd-bool' . (($level || empty($options[self::DUMP_ID])) ? '' : ' nd-top') . '">'
-				. ($var ? 'TRUE' : 'FALSE') . "</span>" . ($options[self::NO_BREAK] ? '' : "\n");
+			. ($var ? 'TRUE' : 'FALSE') . "</span>" . ($options[self::NO_BREAK] ? '' : "\n");
 	}
 
-	
+
 	private static function dumpInteger(&$var, $options, $level) {
 		return "<span class=\"nd-number" . (($level || empty($options[self::DUMP_ID])) ? '' : ' nd-top') . "\">$var</span>"
-				. ($options[self::NO_BREAK] ? '' : "\n");
+			. ($options[self::NO_BREAK] ? '' : "\n");
 	}
 
 
 	private static function dumpDouble(&$var, $options, $level) {
 		$var = var_export($var, TRUE);
 		return '<span class="nd-number' . (($level || empty($options[self::DUMP_ID])) ? '' : ' nd-top') . '">' . $var
-				. (strpos($var, '.') === FALSE ? '.0' : '') . "</span>" . ($options[self::NO_BREAK] ? '' : "\n");
+			. (strpos($var, '.') === FALSE ? '.0' : '') . "</span>" . ($options[self::NO_BREAK] ? '' : "\n");
 	}
 
 
@@ -776,22 +778,22 @@ class TimeDebug {
 			else $arrKey = '8' . $options[self::PARENT_KEY];
 
 			$retVal = '"' . self::encodeString(substr($var, 0, min($options[self::TRUNCATE], 512)), TRUE)
-					. '&hellip;"</span> (' . $varLen . ')';
+				. '&hellip;"</span> (' . $varLen . ')';
 
 			if ($options[self::TRUNCATE] && ($varLen = strlen($var)) > $options[self::TRUNCATE]) {
 				$retVal = '"' . self::encodeString(substr($var, 0, min($options[self::TRUNCATE], 512)), TRUE)
-						. '&hellip;"</span> (' . $varLen . ')';
+					. '&hellip;"</span> (' . $varLen . ')';
 
 				if (self::$advancedLog) {
 					if (empty($options[self::TITLE_PATH])) $path = '';
 					else $path = $options[self::TITLE_PATH] . '§' . ($arrKey ?: '9string');
 
 					$retTitle = self::createTitle('<i>'
-							. str_replace(
-								array('\\r', '\\n', '\\t'),
-								array('<b>\\r</b>', '<b>\\n</b></i><i>', '<b>\\t</b>'),
-								self::encodeString(substr($var, 0, max($options[self::TRUNCATE], 1024)), TRUE)
-							) . ($varLen > 1024 ? '&hellip; &lt; TRUNCATED to 1kB &gt;' : '') . '</i>', $path);
+						. str_replace(
+							array('\\r', '\\n', '\\t'),
+							array('<b>\\r</b>', '<b>\\n</b></i><i>', '<b>\\t</b>'),
+							self::encodeString(substr($var, 0, max($options[self::TRUNCATE], 1024)), TRUE)
+						) . ($varLen > 1024 ? '&hellip; &lt; TRUNCATED to 1kB &gt;' : '') . '</i>', $path);
 					$retClass = ' nd-titled';
 				}
 			}
@@ -802,13 +804,13 @@ class TimeDebug {
 		$retVal = str_replace(array('\\r', '\\n', '\\t'), array('<b>\\r</b>', '<b>\\n</b>', '<b>\\t</b>'), $retVal);
 
 		return '<span class="nd-string' . $retClass . (($level || empty($options[self::DUMP_ID])) ? '' : ' nd-top') . '">'
-				. $retTitle . $retVal . ($options[self::NO_BREAK] ? '' : "\n");
+			. $retTitle . $retVal . ($options[self::NO_BREAK] ? '' : "\n");
 	}
 
 
 	private static function createTitle($html, $id = '') {
 		return '<span id="' . ($id ? md5($id) : 't' . self::$idPrefix . '_' . self::incCounter())
-				. '" class="nd-title"><strong class="nd-inner">' . $html . '</strong></span>';
+			. '" class="nd-title"><strong class="nd-inner">' . $html . '</strong></span>';
 	}
 
 
@@ -828,7 +830,7 @@ class TimeDebug {
 		}
 
 		$out = '<span class="nd-array' . (($level || empty($options[self::DUMP_ID])) ? '' : ' nd-top')
-				. ($arrKey ? '" data-pk="' . $arrKey : '') . '">array</span> (';
+			. ($arrKey ? '" data-pk="' . $arrKey : '') . '">array</span> (';
 
 		if (empty($var)) {
 			return $out . '0)' . ($options[self::NO_BREAK] ? '' : "\n");
@@ -845,7 +847,7 @@ class TimeDebug {
 			if ($key && !empty($options[self::TITLE_PATH])) $options[self::TITLE_PATH] .= '§' . $key;
 
 			$out = '<span class="nd-toggle nette-toggle' . ($collapsed ? '-collapsed">' : '">') . $out . count($var)
-					. ")</span>\n<div" . ($collapsed ? ' class="nette-collapsed"' : '') . ($key ? " data-pk=\"$key\">" : '>');
+				. ")</span>\n<div" . ($collapsed ? ' class="nette-collapsed"' : '') . ($key ? " data-pk=\"$key\">" : '>');
 			$var[$marker] = TRUE;
 			$i = 0;
 
@@ -856,8 +858,8 @@ class TimeDebug {
 				}
 				if ($k !== $marker) {
 					$out .= '<span class="nd-key">'
-							. (preg_match('#^\w+\z#', $k) ? $myKey = $k : '"' . ($myKey = self::encodeString($k, TRUE)) . '"')
-							. '</span> => ' . self::dumpVar($v, array(self::PARENT_KEY => "$myKey") + $options, $level + 1);
+						. (preg_match('#^\w+\z#', $k) ? $myKey = $k : '"' . ($myKey = self::encodeString($k, TRUE)) . '"')
+						. '</span> => ' . self::dumpVar($v, array(self::PARENT_KEY => "$myKey") + $options, $level + 1);
 				}
 			}
 			unset($var[$marker]);
@@ -879,7 +881,7 @@ class TimeDebug {
 		static $list = array();
 		$varClass = get_class($var);
 		$out = '<span class="nd-object' . (($level || empty($options[self::DUMP_ID])) ? '' : ' nd-top') . '">' . $varClass
-				. "</span> (" . count($fields) . ')';
+			. "</span> (" . count($fields) . ')';
 
 		if (empty($fields)) {
 			return $options[self::NO_BREAK] ? $out : "$out\n";
@@ -896,7 +898,7 @@ class TimeDebug {
 			if ($key && !empty($options[self::TITLE_PATH])) $options[self::TITLE_PATH] .= '§' . $key;
 
 			$out = '<span class="nd-toggle nette-toggle' . ($collapsed ? '-collapsed">' : '">') . $out . "</span>\n<div"
-					. ($collapsed ? ' class="nette-collapsed"' : '') . ($key ? " data-pk=\"$key\">" : '>');
+				. ($collapsed ? ' class="nette-collapsed"' : '') . ($key ? " data-pk=\"$key\">" : '>');
 			$list[] = $var;
 			$i = 0;
 
@@ -911,8 +913,8 @@ class TimeDebug {
 					$k = substr($k, strrpos($k, "\x00") + 1);
 				}
 				$out .= '<span class="nd-key"' . ($vis ? ' data-pk="7">' : '>')
-						. (preg_match('#^\w+\z#', $k) ? $myKey = $k : '"' . ($myKey = self::encodeString($k, TRUE)) . '"')
-						. "</span>$vis => " . self::dumpVar($v, array(self::PARENT_KEY => $vis ? "#$myKey" : "$myKey") + $options, $level + 1);
+					. (preg_match('#^\w+\z#', $k) ? $myKey = $k : '"' . ($myKey = self::encodeString($k, TRUE)) . '"')
+					. "</span>$vis => " . self::dumpVar($v, array(self::PARENT_KEY => $vis ? "#$myKey" : "$myKey") + $options, $level + 1);
 			}
 			array_pop($list);
 			return $out . '</div>';

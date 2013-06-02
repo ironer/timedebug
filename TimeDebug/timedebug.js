@@ -531,7 +531,7 @@ td.updateChangeList = function(el) {
 		}
 
 		change.innerHTML = '<span class="nd-time' + (typeof change.data.res !== 'undefined' ? ' nd-res nd-restype' + change.data.res + '">' : '">')
-				+ '[' + change.runtime + ']</span> ' + td.printPath(change);
+			+ '[' + change.runtime + ']</span> ' + td.printPath(change);
 
 		if (change.data.type !== 2) {
 			change.appendChild(JAK.mel('span', {
@@ -780,7 +780,7 @@ td.saveVarChange = function(type, varEl) {
 
 	if (change = varEl.change) {
 		if (change.data.type === type && (type === 2  || (change.valid === valid && change.formated === formated &&
-				JSON.stringify(change.data.value) === JSON.stringify(value)))) {
+			JSON.stringify(change.data.value) === JSON.stringify(value)))) {
 			update = false;
 		} else {
 			change.data.type = type;
@@ -1083,10 +1083,10 @@ td.logAction = function(e) {
 		td.actionData.element = el;
 
 		td.actionData.listeners.push(
-				JAK.Events.addListener(document, 'mousemove', td, td.logResizing),
-				JAK.Events.addListener(document, 'mouseup', td, td.endLogResize),
-				JAK.Events.addListener(el, 'selectstart', td, td.tdStop),
-				JAK.Events.addListener(el, 'dragstart', td, td.tdStop)
+			JAK.Events.addListener(document, 'mousemove', td, td.logResizing),
+			JAK.Events.addListener(document, 'mouseup', td, td.endLogResize),
+			JAK.Events.addListener(el, 'selectstart', td, td.tdStop),
+			JAK.Events.addListener(el, 'dragstart', td, td.tdStop)
 		);
 
 		document.body.focus();
@@ -1421,10 +1421,10 @@ td.startTitleResize = function(e, el) {
 	JAK.DOM.addClass(el, 'nd-action');
 
 	td.actionData.listeners.push(
-			JAK.Events.addListener(document, 'mousemove', td, td.titleResizing),
-			JAK.Events.addListener(document, 'mouseup', td, td.endTitleAction),
-			JAK.Events.addListener(el, 'selectstart', td, td.tdStop),
-			JAK.Events.addListener(el, 'dragstart', td, td.tdStop)
+		JAK.Events.addListener(document, 'mousemove', td, td.titleResizing),
+		JAK.Events.addListener(document, 'mouseup', td, td.endTitleAction),
+		JAK.Events.addListener(el, 'selectstart', td, td.tdStop),
+		JAK.Events.addListener(el, 'dragstart', td, td.tdStop)
 	);
 
 	document.body.focus();
@@ -1451,10 +1451,10 @@ td.startTitleDrag = function(e, el) {
 	JAK.DOM.addClass(el, 'nd-action');
 
 	td.actionData.listeners.push(
-			JAK.Events.addListener(document, 'mousemove', td, td.titleDragging),
-			JAK.Events.addListener(document, 'mouseup', td, td.endTitleAction),
-			JAK.Events.addListener(el, 'selectstart', td, td.tdStop),
-			JAK.Events.addListener(el, 'dragstart', td, td.tdStop)
+		JAK.Events.addListener(document, 'mousemove', td, td.titleDragging),
+		JAK.Events.addListener(document, 'mouseup', td, td.endTitleAction),
+		JAK.Events.addListener(el, 'selectstart', td, td.tdStop),
+		JAK.Events.addListener(el, 'dragstart', td, td.tdStop)
 	);
 
 	document.body.focus();
@@ -1672,11 +1672,11 @@ td.readKeyDown = function(e) {
 			}
 			return false;
 		} else if (e.keyCode === 37 && td.activeTitle) {
-				td.activeTitle.scrollTop = 16 * parseInt((td.activeTitle.scrollTop - 16) / 16);
-				return false;
+			td.activeTitle.scrollTop = 16 * parseInt((td.activeTitle.scrollTop - 16) / 16);
+			return false;
 		} else if (e.keyCode === 39 && td.activeTitle) {
-				td.activeTitle.scrollTop = 16 * parseInt((td.activeTitle.scrollTop + 16) / 16);
-				return false;
+			td.activeTitle.scrollTop = 16 * parseInt((td.activeTitle.scrollTop + 16) / 16);
+			return false;
 		} else if (e.keyCode === 27) {
 			if (td.tdConsole) return td.consoleClose();
 			if (!(td.visibleTitles.length - (td.activeTitle === null ? 0 : 1)) || !confirm('Opravdu resetovat nastaveni titulku?')) {
@@ -2242,7 +2242,7 @@ td.wrapSelection = function(e, el, key) {
 	var retVal = el.value.slice(0, start) + swap[0];
 
 	if (end - start > 1 && (key === "'" || key === '"')
-			&& ((el.value[start] === '"' && el.value[end - 1] === '"') || (el.value[start] === "'" && el.value[end - 1] === "'"))) {
+		&& ((el.value[start] === '"' && el.value[end - 1] === '"') || (el.value[start] === "'" && el.value[end - 1] === "'"))) {
 		td.areaWrite(el, retVal + el.value.slice(start + 1, end - 1) + swap[1] + el.value.slice(end), start + 1, end - 1);
 	} else td.areaWrite(el, retVal + el.value.slice(start, end) + swap[1] + el.value.slice(end), start + 1, end + 1);
 
