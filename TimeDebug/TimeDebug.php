@@ -120,6 +120,9 @@ class TimeDebug {
 
 	public static function init($cache = '', array $options = NULL) {
 		if (self::$initialized) throw new Exception("Trida TimeDebug uz byla inicializovana drive.");
+
+		mb_internal_encoding("UTF-8");
+
 		$options = (array) $options + array(
 			self::INIT_ADVANCED_LOG => FALSE,
 			self::INIT_LOCAL => FALSE,
@@ -489,7 +492,6 @@ class TimeDebug {
 				if ($overwrite) $retText .= 'nd-array-overwrite">';
 				else $retText .= 'nd-array-add">';
 			} elseif($type) {
-
 			} elseif($var !== $value) {
 				$var = $value;
 				$retText .= 'nd-ok">';
@@ -772,30 +774,25 @@ class TimeDebug {
 		$retTitle = '';
 		$retClass = '';
 
-		if ($options[self::TRUNCATE] && ($varLen = strlen($var)) > $options[self::TRUNCATE]) {
+		if ($options[self::TRUNCATE] && ($varLen = mb_strlen($var)) > $options[self::TRUNCATE]) {
 			if (!isset($options[self::PARENT_KEY])) $arrKey = FALSE;
 			elseif ($options[self::PARENT_KEY][0] === '#') $arrKey = '7' . substr($options[self::PARENT_KEY], 1);
 			else $arrKey = '8' . $options[self::PARENT_KEY];
 
-			$retVal = '"' . self::encodeString(substr($var, 0, min($options[self::TRUNCATE], 512)), TRUE)
+			$retVal = '"' . self::encodeString(mb_substr($var, 0, min($options[self::TRUNCATE], 512)), TRUE)
 				. '&hellip;"</span> (' . $varLen . ')';
 
-			if ($options[self::TRUNCATE] && ($varLen = strlen($var)) > $options[self::TRUNCATE]) {
-				$retVal = '"' . self::encodeString(substr($var, 0, min($options[self::TRUNCATE], 512)), TRUE)
-					. '&hellip;"</span> (' . $varLen . ')';
+			if (self::$advancedLog) {
+				if (empty($options[self::TITLE_PATH])) $path = '';
+				else $path = $options[self::TITLE_PATH] . '§' . ($arrKey ?: '9string');
 
-				if (self::$advancedLog) {
-					if (empty($options[self::TITLE_PATH])) $path = '';
-					else $path = $options[self::TITLE_PATH] . '§' . ($arrKey ?: '9string');
-
-					$retTitle = self::createTitle('<i>'
-						. str_replace(
-							array('\\r', '\\n', '\\t'),
-							array('<b>\\r</b>', '<b>\\n</b></i><i>', '<b>\\t</b>'),
-							self::encodeString(substr($var, 0, max($options[self::TRUNCATE], 1024)), TRUE)
-						) . ($varLen > 1024 ? '&hellip; &lt; TRUNCATED to 1kB &gt;' : '') . '</i>', $path);
-					$retClass = ' nd-titled';
-				}
+				$retTitle = self::createTitle('<i>'
+					. str_replace(
+						array('\\r', '\\n', '\\t'),
+						array('<b>\\r</b>', '<b>\\n</b></i><i>', '<b>\\t</b>'),
+						self::encodeString(mb_substr($var, 0, max($options[self::TRUNCATE], 1024)), TRUE)
+					) . ($varLen > 1024 ? '&hellip; &lt; TRUNCATED to 1kB &gt;' : '') . '</i>', $path);
+				$retClass = ' nd-titled';
 			}
 		} else {
 			$retVal = self::encodeString($var) . '</span>';
